@@ -130,9 +130,6 @@ cp .env.example .env
 Edit `.env`:
 
 ```env
-DEPLOYHQ_USERNAME=your-email@example.com
-DEPLOYHQ_PASSWORD=your-40-character-api-key
-DEPLOYHQ_ACCOUNT=your-account-name
 PORT=8080
 NODE_ENV=development
 LOG_LEVEL=debug
