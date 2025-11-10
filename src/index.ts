@@ -6,6 +6,7 @@
 import express from 'express';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -189,6 +190,19 @@ async function main(): Promise<void> {
     const app = express();
     const port = parseInt(process.env.PORT || '8080', 10);
 
+    // Enable CORS for all routes
+    app.use((_req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, X-DeployHQ-Username, X-DeployHQ-Password, X-DeployHQ-Account');
+      next();
+    });
+
+    // Handle OPTIONS preflight
+    app.options('*', (_req, res) => {
+      res.sendStatus(200);
+    });
+
     // Store active transports by session ID
     const transports = new Map<string, SSEServerTransport>();
 
@@ -262,7 +276,7 @@ async function main(): Promise<void> {
       }
     });
 
-    // POST endpoint for MCP messages
+    // POST endpoint for MCP messages (SSE transport)
     app.post('/message', express.json(), async (req, res) => {
       // Extract session ID from query parameter (sent by SSE transport)
       const sessionId = req.query.sessionId as string;
@@ -292,11 +306,70 @@ async function main(): Promise<void> {
       }
     });
 
+    // HTTP transport endpoint for MCP (JSON-RPC over HTTP)
+    app.post('/mcp', express.json(), async (req, res) => {
+      log.info('New HTTP transport request');
+
+      // Extract credentials from custom headers
+      const username = req.headers['x-deployhq-username'] as string || process.env.DEPLOYHQ_USERNAME;
+      const password = req.headers['x-deployhq-password'] as string || process.env.DEPLOYHQ_PASSWORD;
+      const account = req.headers['x-deployhq-account'] as string || process.env.DEPLOYHQ_ACCOUNT;
+
+      // Validate credentials
+      if (!username || !password || !account) {
+        log.error('Missing credentials in request headers');
+        res.status(401).json({
+          error: 'Missing credentials in request headers',
+        });
+        return;
+      }
+
+      log.info(`Processing HTTP request for account: ${account} (user: ${username})`);
+
+      try {
+        // Create transport with JSON response mode (no SSE streaming)
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined, // Stateless mode
+          enableJsonResponse: true, // Return JSON instead of SSE
+        });
+
+        // Create MCP server for this request
+        const server = createMCPServer(username, password, account);
+
+        // Connect server to transport
+        await server.connect(transport);
+
+        // Handle the request
+        await transport.handleRequest(req, res, req.body);
+
+        // Close connection after response
+        await server.close();
+      } catch (error) {
+        log.error('Error processing HTTP transport request:', error);
+
+        // Only send error response if headers not already sent
+        if (!res.headersSent) {
+          res.status(500).json({
+            jsonrpc: '2.0',
+            error: {
+              code: -32603,
+              message: 'Internal error',
+              data: {
+                details: (error as Error).message,
+              },
+            },
+            id: null,
+          });
+        }
+      }
+    });
+
     // Start server
     app.listen(port, () => {
       log.info(`Server running on port ${port}`);
       log.info(`Health check: http://localhost:${port}/health`);
       log.info(`SSE endpoint: http://localhost:${port}/sse`);
+      log.info(`HTTP transport: http://localhost:${port}/mcp`);
     });
 
     // Graceful shutdown

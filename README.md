@@ -6,9 +6,10 @@ A hosted Model Context Protocol (MCP) server for DeployHQ that enables AI assist
 
 - **Full DeployHQ API Integration**: Access projects, servers, and deployments
 - **Hosted Solution**: Deploy to Digital Ocean App Platform at `mcp.deployhq.com`
-- **SSE Transport**: Server-Sent Events for reliable real-time communication
+- **Multiple Transports**: Both SSE (Server-Sent Events) and HTTP (JSON-RPC) transports
 - **Type-Safe**: Built with TypeScript and Zod validation
 - **Production-Ready**: Comprehensive error handling, logging, and monitoring
+- **CORS Enabled**: Cross-origin requests supported for web integrations
 
 ## 📋 Available Tools
 
@@ -70,11 +71,29 @@ Create a new deployment for a project.
 │  or Code CLI    │  SSE    │  (Digital Ocean) │  HTTPS  │  API        │
 │  (Headers) ────────────────►  (Headers) ──────────────► (Basic Auth) │
 └─────────────────┘         └──────────────────┘         └─────────────┘
+         │                            ▲
+         │                            │
+         └────────────────────────────┘
+              HTTP (JSON-RPC)
 ```
 
-- **Claude Desktop / Code CLI**: MCP clients that connect via SSE with custom headers
+- **Claude Desktop / Code CLI**: MCP clients that connect via SSE or HTTP with custom headers
 - **MCP Server**: Express.js server that accepts per-user credentials
 - **DeployHQ API**: REST API with HTTP Basic Authentication
+
+### Transport Options
+
+The server supports two transport mechanisms:
+
+1. **SSE Transport** (`GET /sse`):
+   - Long-lived connection with Server-Sent Events
+   - Best for Claude Desktop and persistent connections
+   - Supports bidirectional communication via POST messages
+
+2. **HTTP Transport** (`POST /mcp`):
+   - Stateless JSON-RPC 2.0 over HTTP
+   - Best for web integrations and simple request/response workflows
+   - Each request is independent with credentials in headers
 
 ### Multi-Tenant Authentication Flow
 
@@ -281,7 +300,67 @@ Test the SSE endpoint:
 
 ```bash
 # Test SSE connection
-curl -N http://localhost:8080/sse
+curl -N http://localhost:8080/sse \
+  -H "X-DeployHQ-Username: your-username" \
+  -H "X-DeployHQ-Password: your-password" \
+  -H "X-DeployHQ-Account: your-account"
+```
+
+Test the HTTP transport endpoint:
+
+```bash
+# Initialize connection
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "X-DeployHQ-Username: your-username" \
+  -H "X-DeployHQ-Password: your-password" \
+  -H "X-DeployHQ-Account: your-account" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {},
+      "clientInfo": {"name": "test", "version": "1.0.0"}
+    },
+    "id": 1
+  }'
+
+# List tools
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "X-DeployHQ-Username: your-username" \
+  -H "X-DeployHQ-Password: your-password" \
+  -H "X-DeployHQ-Account: your-account" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "params": {},
+    "id": 2
+  }'
+
+# Call a tool
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "X-DeployHQ-Username: your-username" \
+  -H "X-DeployHQ-Password: your-password" \
+  -H "X-DeployHQ-Account: your-account" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "list_projects",
+      "arguments": {}
+    },
+    "id": 3
+  }'
+```
+
+Or use the provided test script:
+
+```bash
+# Make sure .env file has your credentials
+./test-http-transport.sh
 ```
 
 ### Integration Testing
