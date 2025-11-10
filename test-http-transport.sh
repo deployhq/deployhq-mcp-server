@@ -14,22 +14,27 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# Load environment variables
-source .env
+# Load environment variables if .env exists
+if [ -f .env ]; then
+    source .env
+fi
 
+# Check for credentials in environment variables
 if [ -z "$DEPLOYHQ_USERNAME" ] || [ -z "$DEPLOYHQ_PASSWORD" ] || [ -z "$DEPLOYHQ_ACCOUNT" ]; then
     echo "Error: Missing required environment variables"
-    echo "Please set DEPLOYHQ_USERNAME, DEPLOYHQ_PASSWORD, and DEPLOYHQ_ACCOUNT in .env"
+    echo "Please set DEPLOYHQ_USERNAME, DEPLOYHQ_PASSWORD, and DEPLOYHQ_ACCOUNT as environment variables"
+    echo "Example: DEPLOYHQ_USERNAME=user DEPLOYHQ_PASSWORD=pass DEPLOYHQ_ACCOUNT=account ./test-http-transport.sh"
     exit 1
 fi
 
-BASE_URL="http://localhost:8080"
+BASE_URL="http://localhost:8181"
 
 echo "1. Testing initialize request..."
 echo ""
 
 INIT_RESPONSE=$(curl -s -X POST "$BASE_URL/mcp" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -H "X-DeployHQ-Username: $DEPLOYHQ_USERNAME" \
   -H "X-DeployHQ-Password: $DEPLOYHQ_PASSWORD" \
   -H "X-DeployHQ-Account: $DEPLOYHQ_ACCOUNT" \
@@ -56,6 +61,7 @@ echo ""
 
 TOOLS_RESPONSE=$(curl -s -X POST "$BASE_URL/mcp" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -H "X-DeployHQ-Username: $DEPLOYHQ_USERNAME" \
   -H "X-DeployHQ-Password: $DEPLOYHQ_PASSWORD" \
   -H "X-DeployHQ-Account: $DEPLOYHQ_ACCOUNT" \
@@ -75,6 +81,7 @@ echo ""
 
 CALL_RESPONSE=$(curl -s -X POST "$BASE_URL/mcp" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -H "X-DeployHQ-Username: $DEPLOYHQ_USERNAME" \
   -H "X-DeployHQ-Password: $DEPLOYHQ_PASSWORD" \
   -H "X-DeployHQ-Account: $DEPLOYHQ_ACCOUNT" \
@@ -97,6 +104,7 @@ echo ""
 
 AUTH_ERROR=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL/mcp" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "method": "tools/list",
@@ -105,8 +113,10 @@ AUTH_ERROR=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL/mcp" \
   }')
 
 echo "Auth Error Response:"
-echo "$AUTH_ERROR" | head -n -1 | jq .
-echo "HTTP Status: $(echo "$AUTH_ERROR" | tail -n 1 | cut -d':' -f2)"
+HTTP_STATUS=$(echo "$AUTH_ERROR" | tail -n 1 | cut -d':' -f2)
+RESPONSE_BODY=$(echo "$AUTH_ERROR" | sed '$d')
+echo "$RESPONSE_BODY" | jq .
+echo "HTTP Status: $HTTP_STATUS"
 echo ""
 
 echo "✅ All tests completed!"

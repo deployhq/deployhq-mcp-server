@@ -6,7 +6,6 @@
 import express from 'express';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -319,7 +318,12 @@ async function main(): Promise<void> {
       if (!username || !password || !account) {
         log.error('Missing credentials in request headers');
         res.status(401).json({
-          error: 'Missing credentials in request headers',
+          jsonrpc: '2.0',
+          error: {
+            code: -32000,
+            message: 'Missing credentials in request headers',
+          },
+          id: req.body?.id || null,
         });
         return;
       }
@@ -327,40 +331,145 @@ async function main(): Promise<void> {
       log.info(`Processing HTTP request for account: ${account} (user: ${username})`);
 
       try {
-        // Create transport with JSON response mode (no SSE streaming)
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: undefined, // Stateless mode
-          enableJsonResponse: true, // Return JSON instead of SSE
+        // Create DeployHQ client with user credentials
+        const client = new DeployHQClient({
+          username,
+          password,
+          account,
+          timeout: 30000,
         });
 
-        // Create MCP server for this request
-        const server = createMCPServer(username, password, account);
+        const { jsonrpc, method, params, id } = req.body;
 
-        // Connect server to transport
-        await server.connect(transport);
-
-        // Handle the request
-        await transport.handleRequest(req, res, req.body);
-
-        // Close connection after response
-        await server.close();
-      } catch (error) {
-        log.error('Error processing HTTP transport request:', error);
-
-        // Only send error response if headers not already sent
-        if (!res.headersSent) {
-          res.status(500).json({
+        // Validate JSON-RPC request
+        if (jsonrpc !== '2.0') {
+          res.status(400).json({
             jsonrpc: '2.0',
             error: {
-              code: -32603,
-              message: 'Internal error',
-              data: {
-                details: (error as Error).message,
-              },
+              code: -32600,
+              message: 'Invalid Request: jsonrpc must be "2.0"',
             },
-            id: null,
+            id: id || null,
           });
+          return;
         }
+
+        let result: unknown;
+
+        // Handle different MCP methods
+        switch (method) {
+          case 'initialize':
+            log.debug('Handling initialize request');
+            result = {
+              protocolVersion: '2024-11-05',
+              capabilities: {
+                tools: {},
+              },
+              serverInfo: {
+                name: 'deployhq-mcp-server',
+                version: '1.0.0',
+              },
+            };
+            break;
+
+          case 'tools/list':
+            log.debug('Handling tools/list request');
+            result = { tools };
+            break;
+
+          case 'tools/call': {
+            const { name, arguments: args } = params;
+            log.info(`Calling tool: ${name}`);
+
+            switch (name) {
+              case 'list_projects':
+                ListProjectsSchema.parse(args);
+                result = await client.listProjects();
+                break;
+
+              case 'get_project': {
+                const validatedArgs = GetProjectSchema.parse(args);
+                result = await client.getProject(validatedArgs.permalink);
+                break;
+              }
+
+              case 'list_servers': {
+                const validatedArgs = ListServersSchema.parse(args);
+                result = await client.listServers(validatedArgs.project);
+                break;
+              }
+
+              case 'list_deployments': {
+                const validatedArgs = ListDeploymentsSchema.parse(args);
+                result = await client.listDeployments(
+                  validatedArgs.project,
+                  validatedArgs.page,
+                  validatedArgs.server_uuid
+                );
+                break;
+              }
+
+              case 'get_deployment': {
+                const validatedArgs = GetDeploymentSchema.parse(args);
+                result = await client.getDeployment(validatedArgs.project, validatedArgs.uuid);
+                break;
+              }
+
+              case 'create_deployment': {
+                const validatedArgs = CreateDeploymentSchema.parse(args);
+                const { project, ...deploymentParams } = validatedArgs;
+                result = await client.createDeployment(project, deploymentParams);
+                break;
+              }
+
+              default:
+                throw new Error(`Unknown tool: ${name}`);
+            }
+
+            // Wrap tool result in MCP format
+            result = {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2),
+                },
+              ],
+            };
+            break;
+          }
+
+          default:
+            res.status(400).json({
+              jsonrpc: '2.0',
+              error: {
+                code: -32601,
+                message: `Method not found: ${method}`,
+              },
+              id: id || null,
+            });
+            return;
+        }
+
+        // Send successful response
+        res.json({
+          jsonrpc: '2.0',
+          result,
+          id,
+        });
+      } catch (error) {
+        log.error('Error processing HTTP request:', error);
+
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32603,
+            message: 'Internal error',
+            data: {
+              details: (error as Error).message,
+            },
+          },
+          id: req.body?.id || null,
+        });
       }
     });
 
