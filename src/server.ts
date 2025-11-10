@@ -24,13 +24,13 @@ import {
  * Logger utility
  */
 const log = {
-  info: (message: string, ...args: unknown[]) => {
+  info: (message: string, ...args: unknown[]): void => {
     console.error(`[INFO] ${new Date().toISOString()} - ${message}`, ...args);
   },
-  error: (message: string, ...args: unknown[]) => {
+  error: (message: string, ...args: unknown[]): void => {
     console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, ...args);
   },
-  debug: (message: string, ...args: unknown[]) => {
+  debug: (message: string, ...args: unknown[]): void => {
     if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
       console.error(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args);
     }
@@ -74,7 +74,7 @@ export function createMCPServer(client: DeployHQClient): Server {
     try {
       switch (name) {
         case 'list_projects': {
-          const validatedArgs = ListProjectsSchema.parse(args);
+          ListProjectsSchema.parse(args);
           const projects = await client.listProjects();
           return {
             content: [

@@ -29,30 +29,18 @@ dotenv.config();
  * Logger utility
  */
 const log = {
-  info: (message: string, ...args: unknown[]) => {
+  info: (message: string, ...args: unknown[]): void => {
     console.log(`[INFO] ${new Date().toISOString()} - ${message}`, ...args);
   },
-  error: (message: string, ...args: unknown[]) => {
+  error: (message: string, ...args: unknown[]): void => {
     console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, ...args);
   },
-  debug: (message: string, ...args: unknown[]) => {
+  debug: (message: string, ...args: unknown[]): void => {
     if (process.env.NODE_ENV === 'development' || process.env.LOG_LEVEL === 'debug') {
       console.log(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args);
     }
   },
 };
-
-/**
- * Validates required environment variables (optional - can use headers instead)
- */
-function validateEnvironment(): void {
-  const required = ['DEPLOYHQ_USERNAME', 'DEPLOYHQ_PASSWORD', 'DEPLOYHQ_ACCOUNT'];
-  const missing = required.filter((key) => !process.env[key]);
-
-  if (missing.length > 0) {
-    log.info('Note: Environment variables not set. Credentials must be provided via HTTP headers.');
-  }
-}
 
 /**
  * Creates the MCP server instance with per-request client initialization
@@ -312,7 +300,7 @@ async function main(): Promise<void> {
     });
 
     // Graceful shutdown
-    const shutdown = async (signal: string) => {
+    const shutdown = async (signal: string): Promise<void> => {
       log.info(`Received ${signal}, shutting down gracefully`);
       process.exit(0);
     };

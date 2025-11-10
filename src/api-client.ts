@@ -7,13 +7,18 @@
  * Custom error class for DeployHQ API errors
  */
 export class DeployHQError extends Error {
+  public statusCode?: number;
+  public response?: unknown;
+
   constructor(
     message: string,
-    public statusCode?: number,
-    public response?: unknown
+    statusCode?: number,
+    response?: unknown
   ) {
     super(message);
     this.name = 'DeployHQError';
+    this.statusCode = statusCode;
+    this.response = response;
   }
 }
 
