@@ -25,7 +25,7 @@ This guide will help you configure and use the DeployHQ MCP Server with Claude D
 ### Prerequisites
 
 - **Claude Desktop** (for GUI) or **Claude Code CLI** (for terminal) installed
-- DeployHQ account with API access
+- **DeployHQ account with API access** (API is **not available** for Solo and Free plans)
 - Access to the hosted MCP server at `mcp.deployhq.com` (or your own deployment)
 
 ### Getting Your DeployHQ Credentials
@@ -143,6 +143,8 @@ claude mcp add deployhq https://mcp.deployhq.com/sse \
 - Use `http://localhost:8181/sse` for local development
 - Use `https://mcp.deployhq.com/sse` for production
 - The `--transport sse` flag specifies Server-Sent Events protocol
+
+> **⚠️ IMPORTANT**: After adding the MCP server, you **must exit and restart** your Claude Code session for the changes to take effect. Type `exit` or press Ctrl+D, then run `claude` again.
 
 ### 3. Verify Configuration
 

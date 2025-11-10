@@ -94,13 +94,15 @@ Create a new deployment for a project.
 
 **Claude Code CLI**:
 - Config file: `.claude.json` (local), `~/.config/claude/config.json` (user), or `.mcp.json` (project)
-- Loads on new session start
+- Loads on new session start (**requires restart** after configuration changes)
 - CLI-based configuration with `claude mcp add` command
+
+> **📖 For detailed setup instructions**, see [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 
 ## 📦 Prerequisites
 
 - Node.js 20+
-- DeployHQ account with API access
+- **DeployHQ account with API access** (API is **not available** for Solo and Free plans)
 - Digital Ocean account (for deployment)
 - `doctl` CLI (for deployment)
 
@@ -184,9 +186,9 @@ curl http://localhost:8080/health
 4. **Set environment variables**:
    - Go to App Settings → Environment Variables
    - Add the following as **encrypted** variables:
-     - `DEPLOYHQ_USERNAME`
-     - `DEPLOYHQ_PASSWORD`
-     - `DEPLOYHQ_ACCOUNT`
+     - `DEPLOYHQ_USERNAME` (your email)
+     - `DEPLOYHQ_PASSWORD` (your 40-character API key)
+     - `DEPLOYHQ_ACCOUNT` (your account name)
    - Add these as regular variables:
      - `NODE_ENV=production`
      - `PORT=8080`
