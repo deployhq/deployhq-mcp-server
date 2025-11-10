@@ -1,0 +1,64 @@
+# Digital Ocean App Platform Configuration
+# Deploy configuration for DeployHQ MCP Server
+
+name: deployhq-mcp-server
+
+# Services
+services:
+  - name: deployhq-mcp-server
+    # Source configuration
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: deployhq/deployhq-mcp-server
+
+    # Build configuration
+    build_command: npm run build
+
+    # Dockerfile configuration (comment out if using buildpack)
+    dockerfile_path: Dockerfile
+
+    # Runtime configuration
+    run_command: npm start
+
+    # Environment configuration
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8181"
+      - key: LOG_LEVEL
+        value: info
+
+    # HTTP configuration
+    http_port: 8181
+
+    # Health check configuration
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+
+    # Instance configuration
+    instance_count: 1
+    instance_size_slug: basic-xxs
+
+    # Routes configuration
+    routes:
+      - path: /
+
+# Region
+region: nyc
+
+# Domains (configure after initial deployment)
+# domains:
+#   - domain: mcp.deployhq.com
+#     type: PRIMARY
+
+# Alerts
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED

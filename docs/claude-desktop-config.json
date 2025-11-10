@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "deployhq": {
+      "url": "https://mcp.deployhq.com/sse",
+      "headers": {
+        "X-DeployHQ-Username": "your-email@example.com",
+        "X-DeployHQ-Password": "your-40-character-api-key",
+        "X-DeployHQ-Account": "your-account-name"
+      }
+    }
+  }
+}
