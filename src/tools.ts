@@ -29,6 +29,11 @@ export const GetDeploymentSchema = z.object({
   uuid: z.string().describe('Deployment UUID'),
 });
 
+export const GetDeploymentLogSchema = z.object({
+  project: z.string().describe('Project permalink'),
+  uuid: z.string().describe('Deployment UUID'),
+});
+
 export const CreateDeploymentSchema = z.object({
   project: z.string().describe('Project permalink'),
   parent_identifier: z.string().describe('Server or server group UUID'),
@@ -112,6 +117,25 @@ export const tools = [
     name: 'get_deployment',
     description:
       'Get detailed information about a specific deployment including its status, logs, files changed, and server details.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        project: {
+          type: 'string',
+          description: 'Project permalink',
+        },
+        uuid: {
+          type: 'string',
+          description: 'Deployment UUID',
+        },
+      },
+      required: ['project', 'uuid'],
+    },
+  },
+  {
+    name: 'get_deployment_log',
+    description:
+      'Get the deployment log for a specific deployment. Returns the complete log output as text, useful for debugging failed or completed deployments.',
     inputSchema: {
       type: 'object',
       properties: {

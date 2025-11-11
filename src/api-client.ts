@@ -295,6 +295,83 @@ export class DeployHQClient {
   }
 
   /**
+   * Gets the deployment log for a specific deployment
+   * @param project - Project permalink
+   * @param uuid - Deployment UUID
+   * @returns Deployment log as text
+   */
+  async getDeploymentLog(project: string, uuid: string): Promise<string> {
+    const url = `${this.baseUrl}/projects/${project}/deployments/${uuid}/log`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': this.authHeader,
+          'Accept': 'text/plain',
+        },
+        signal: controller.signal,
+      } as NodeFetchRequestInit);
+
+      clearTimeout(timeoutId);
+
+      if (response.status === 401 || response.status === 403) {
+        throw new AuthenticationError('Invalid credentials or insufficient permissions');
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new DeployHQError(
+          `Failed to fetch deployment log: ${response.statusText}`,
+          response.status,
+          errorText
+        );
+      }
+
+      return await response.text();
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error instanceof DeployHQError) {
+        throw error;
+      }
+
+      if ((error as Error).name === 'AbortError') {
+        throw new DeployHQError('Request timeout', 408);
+      }
+
+      throw new DeployHQError(
+        `Request failed: ${(error as Error).message}`,
+        undefined,
+        error
+      );
+    }
+  }
+
+  /**
+   * Validates credentials by attempting to list projects
+   * @returns true if credentials are valid
+   * @throws AuthenticationError if credentials are invalid
+   */
+  async validateCredentials(): Promise<boolean> {
+    try {
+      await this.listProjects();
+      return true;
+    } catch (error) {
+      if (error instanceof AuthenticationError) {
+        throw error;
+      }
+      // Re-throw other errors as authentication failures for clarity
+      throw new AuthenticationError(
+        `Failed to validate credentials: ${(error as Error).message}`
+      );
+    }
+  }
+
+  /**
    * Gets the base URL for this client
    * @returns Base URL
    */

@@ -7,6 +7,7 @@
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createMCPServer } from './mcp-server.js';
+import { DeployHQClient, AuthenticationError } from './api-client.js';
 import { log } from './utils/logger.js';
 
 /**
@@ -28,6 +29,28 @@ async function main(): Promise<void> {
 
     log.info('Starting DeployHQ MCP Server in stdio mode');
     log.debug(`Account: ${account}, Email: ${email}`);
+
+    // Validate credentials before starting server
+    log.info('Validating credentials...');
+    try {
+      const testClient = new DeployHQClient({
+        username: email,
+        password: apiKey,
+        account,
+        timeout: 10000, // 10 second timeout for validation
+      });
+      await testClient.validateCredentials();
+      log.info('✓ Credentials validated successfully');
+    } catch (error) {
+      if (error instanceof AuthenticationError) {
+        log.error('✗ Authentication failed: Invalid credentials or insufficient permissions');
+        log.error('Please check your DEPLOYHQ_EMAIL and DEPLOYHQ_API_KEY');
+        process.exit(1);
+      }
+      log.error('✗ Failed to validate credentials:', (error as Error).message);
+      log.error('Please check your network connection and DeployHQ account settings');
+      process.exit(1);
+    }
 
     // Create MCP server with user credentials
     const server = createMCPServer(email, apiKey, account);

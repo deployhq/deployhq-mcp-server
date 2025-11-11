@@ -14,7 +14,17 @@ A Model Context Protocol (MCP) server for DeployHQ that enables AI assistants li
 
 ## 📋 Available Tools
 
-The MCP server provides the following tools for AI assistants:
+The MCP server provides **7 tools** for AI assistants:
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_projects` | List all projects | None |
+| `get_project` | Get project details | `permalink` |
+| `list_servers` | List project servers | `project` |
+| `list_deployments` | List deployments with pagination | `project`, `page?`, `server_uuid?` |
+| `get_deployment` | Get deployment details | `project`, `uuid` |
+| `get_deployment_log` | Get deployment log output | `project`, `uuid` |
+| `create_deployment` | Create new deployment | `project`, `parent_identifier`, `start_revision`, `end_revision`, + optional params |
 
 ### `list_projects`
 
@@ -48,6 +58,15 @@ Get detailed information about a specific deployment.
 **Parameters**:
 - `project` (string): Project permalink
 - `uuid` (string): Deployment UUID
+
+### `get_deployment_log`
+Get the deployment log for a specific deployment. Useful for debugging failed deployments.
+
+**Parameters**:
+- `project` (string): Project permalink
+- `uuid` (string): Deployment UUID
+
+**Returns**: Complete deployment log as text
 
 ### `create_deployment`
 Create a new deployment for a project.
@@ -94,11 +113,14 @@ Add to your `.claude.json` file in your project directory.
         "DEPLOYHQ_EMAIL": "your-email@example.com",
         "DEPLOYHQ_API_KEY": "your-password",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
+        // Optional: "LOG_LEVEL": "INFO"  (ERROR, INFO, or DEBUG)
       }
     }
   }
 }
 ```
+
+**Note**: Only the 3 DeployHQ credentials are required. `LOG_LEVEL` is optional and defaults to `INFO`.
 
 ### Start Using
 
@@ -107,6 +129,142 @@ Once configured, you can ask Claude to interact with DeployHQ:
 - "Show me the servers for project X"
 - "Get the latest deployment status for project Y"
 - "Create a new deployment for project Z"
+- "Show me the deployment log for the latest deployment"
+
+## 💡 Common Usage Examples
+
+### Check Deployment Status
+```
+User: What's the status of my latest deployment for my-app?
+Claude: [Uses list_deployments → get_deployment → shows status]
+```
+
+### Debug Failed Deployment
+```
+User: Why did the last deployment fail for my-app?
+Claude: [Uses list_deployments → get_deployment_log → analyzes log]
+```
+
+### Deploy Latest Changes
+```
+User: Deploy the latest changes to production for my-app
+Claude: [Uses list_servers → list_deployments → create_deployment with use_latest]
+```
+
+### Complete Workflow Example
+```
+User: I want to deploy my-app to production with the latest changes
+
+Claude will:
+1. Use list_projects to find "my-app"
+2. Use list_servers to find production server UUID
+3. Use list_deployments with use_latest to get last revision
+4. Use create_deployment to queue deployment
+5. Use get_deployment to show status
+6. Use get_deployment_log if anything fails
+```
+
+## 🔧 Configuration Options
+
+### Environment Variables
+
+#### Required
+- `DEPLOYHQ_EMAIL`: Your DeployHQ login email
+- `DEPLOYHQ_API_KEY`: Your DeployHQ password/API key
+- `DEPLOYHQ_ACCOUNT`: Your DeployHQ account name (from URL: `https://ACCOUNT.deployhq.com`)
+
+#### Optional
+- `LOG_LEVEL`: Controls log verbosity - `ERROR`, `INFO`, or `DEBUG` (default: `INFO`)
+- `NODE_ENV`: Environment mode - `production` or `development`
+
+### Log Levels
+
+Control verbosity with the `LOG_LEVEL` environment variable:
+
+- **ERROR**: Only show errors
+- **INFO**: Show info and errors (default)
+- **DEBUG**: Show all logs including detailed API calls
+
+Example:
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-password",
+        "DEPLOYHQ_ACCOUNT": "your-account-name",
+        "LOG_LEVEL": "DEBUG"
+      }
+    }
+  }
+}
+```
+
+## 🐛 Troubleshooting
+
+### Server Won't Start
+
+**Problem**: Server exits immediately after starting
+
+**Solutions**:
+- Check that all required environment variables are set
+- Verify Node.js version is 18 or higher: `node --version`
+- Check logs in Claude Desktop/Code for error messages
+- Try setting `LOG_LEVEL=DEBUG` for more details
+
+### Authentication Errors
+
+**Problem**: "Authentication failed" or 401/403 errors
+
+**Solutions**:
+- Verify your email and API key are correct
+- Check that your API key hasn't expired
+- Ensure your account has API access enabled
+- Try logging into DeployHQ web interface with same credentials
+
+### Project Not Found
+
+**Problem**: "Project not found" or 404 errors
+
+**Solutions**:
+- Use `list_projects` to see exact permalink format
+- Project permalinks are case-sensitive
+- Check that you have access to the project in DeployHQ
+
+### Deployment Fails
+
+**Problem**: Deployment created but fails immediately
+
+**Solutions**:
+- Use `get_deployment_log` to see detailed error logs
+- Verify server UUID is correct with `list_servers`
+- Check that start and end revisions exist in repository
+- Ensure server has correct deploy keys configured
+
+### Connection Timeouts
+
+**Problem**: "Request timeout" errors
+
+**Solutions**:
+- Check your internet connection
+- Verify DeployHQ API is accessible: `curl https://YOUR_ACCOUNT.deployhq.com`
+- Large deployment lists may take time - use pagination
+- Try again in a moment if DeployHQ is experiencing issues
+
+### Logs Not Showing
+
+**Problem**: Not seeing any log output
+
+**Solutions**:
+- Logs go to stderr, not stdout (for stdio transport)
+- Check Claude Desktop/Code logs location:
+  - macOS: `~/Library/Logs/Claude/`
+  - Windows: `%APPDATA%\Claude\logs\`
+- Set `LOG_LEVEL=DEBUG` for verbose output
+- For hosted mode, check Digital Ocean logs
 
 ### Getting Your DeployHQ Credentials
 
@@ -207,7 +365,7 @@ Configure your local `.claude.json` to use the built version:
 The project includes a comprehensive test suite using Vitest:
 
 **Test Coverage:**
-- ✅ **Tool Schema Validation** - All 6 MCP tool schemas with valid/invalid inputs
+- ✅ **Tool Schema Validation** - All 7 MCP tool schemas with valid/invalid inputs
 - ✅ **API Client Methods** - All DeployHQ API methods with mocked responses
 - ✅ **Error Handling** - Authentication, validation, and network errors
 - ✅ **MCP Server Factory** - Server creation and configuration
@@ -221,7 +379,7 @@ npm run test:ui       # Interactive UI for debugging
 ```
 
 **Test Stats:**
-- 51 tests across 3 test suites
+- 50+ tests across 3 test suites
 - Covers tools, api-client, and mcp-server modules
 - Uses mocked fetch for isolated unit testing
 

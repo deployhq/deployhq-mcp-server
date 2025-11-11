@@ -5,6 +5,7 @@ import {
   ListServersSchema,
   ListDeploymentsSchema,
   GetDeploymentSchema,
+  GetDeploymentLogSchema,
   CreateDeploymentSchema,
   tools,
 } from '../tools.js';
@@ -128,6 +129,30 @@ describe('Tool Schemas', () => {
     });
   });
 
+  describe('GetDeploymentLogSchema', () => {
+    it('should validate with project and uuid', () => {
+      const result = GetDeploymentLogSchema.safeParse({
+        project: 'my-project',
+        uuid: 'deployment-123',
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.project).toBe('my-project');
+        expect(result.data.uuid).toBe('deployment-123');
+      }
+    });
+
+    it('should fail without project', () => {
+      const result = GetDeploymentLogSchema.safeParse({ uuid: 'deployment-123' });
+      expect(result.success).toBe(false);
+    });
+
+    it('should fail without uuid', () => {
+      const result = GetDeploymentLogSchema.safeParse({ project: 'my-project' });
+      expect(result.success).toBe(false);
+    });
+  });
+
   describe('CreateDeploymentSchema', () => {
     it('should validate with required fields', () => {
       const result = CreateDeploymentSchema.safeParse({
@@ -211,8 +236,8 @@ describe('Tool Schemas', () => {
   });
 
   describe('Tools Array', () => {
-    it('should export 6 tools', () => {
-      expect(tools).toHaveLength(6);
+    it('should export 7 tools', () => {
+      expect(tools).toHaveLength(7);
     });
 
     it('should have correct tool names', () => {
@@ -222,6 +247,7 @@ describe('Tool Schemas', () => {
       expect(toolNames).toContain('list_servers');
       expect(toolNames).toContain('list_deployments');
       expect(toolNames).toContain('get_deployment');
+      expect(toolNames).toContain('get_deployment_log');
       expect(toolNames).toContain('create_deployment');
     });
 

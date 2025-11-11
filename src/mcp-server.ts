@@ -17,6 +17,7 @@ import {
   ListServersSchema,
   ListDeploymentsSchema,
   GetDeploymentSchema,
+  GetDeploymentLogSchema,
   CreateDeploymentSchema,
 } from './tools.js';
 
@@ -109,6 +110,14 @@ export function createMCPServer(
           break;
         }
 
+        case 'get_deployment_log': {
+          const validatedArgs = GetDeploymentLogSchema.parse(args);
+          log.debug(`Fetching deployment log: ${validatedArgs.uuid}`);
+          result = await client.getDeploymentLog(validatedArgs.project, validatedArgs.uuid);
+          log.debug('Got deployment log');
+          break;
+        }
+
         case 'create_deployment': {
           const validatedArgs = CreateDeploymentSchema.parse(args);
           const { project, ...deploymentParams } = validatedArgs;
@@ -136,18 +145,60 @@ export function createMCPServer(
     } catch (error) {
       log.error(`Error executing tool ${name}:`, error);
 
+      // Build helpful error message with context
+      let errorMessage = (error as Error).message;
+      let suggestions: string[] = [];
+
+      // Add context-specific suggestions based on error type
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Authentication')) {
+          suggestions.push('• Verify your DEPLOYHQ_EMAIL and DEPLOYHQ_API_KEY are correct');
+          suggestions.push('• Check that your API key has sufficient permissions');
+        }
+        if (error.message.includes('404') || error.message.includes('not found')) {
+          suggestions.push('• Verify the project permalink or identifier is correct');
+          suggestions.push('• Check that the resource exists in your DeployHQ account');
+        }
+        if (error.message.includes('422') || error.message.includes('Validation')) {
+          suggestions.push('• Check that all required parameters are provided');
+          suggestions.push('• Verify parameter values are in the correct format');
+        }
+        if (error.message.includes('timeout') || error.message.includes('ETIMEDOUT')) {
+          suggestions.push('• Check your network connection');
+          suggestions.push('• Try again in a moment');
+        }
+        if (error.message.includes('deployment')) {
+          suggestions.push('• Use list_deployments to verify deployment exists');
+          suggestions.push('• Check deployment UUID is correct');
+        }
+        if (error.message.includes('server')) {
+          suggestions.push('• Use list_servers to see available servers');
+          suggestions.push('• Verify server UUID is correct');
+        }
+        if (error.message.includes('project')) {
+          suggestions.push('• Use list_projects to see available projects');
+          suggestions.push('• Verify project permalink matches exactly');
+        }
+      }
+
+      const errorResponse: Record<string, unknown> = {
+        error: errorMessage,
+        tool: name,
+      };
+
+      if (suggestions.length > 0) {
+        errorResponse.suggestions = suggestions;
+      }
+
+      if (error instanceof Error && error.stack) {
+        errorResponse.details = error.stack;
+      }
+
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify(
-              {
-                error: (error as Error).message,
-                details: error instanceof Error ? error.stack : String(error),
-              },
-              null,
-              2
-            ),
+            text: JSON.stringify(errorResponse, null, 2),
           },
         ],
         isError: true,
