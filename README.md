@@ -156,24 +156,37 @@ cd deployhq-mcp-server
 npm install
 ```
 
-### 3. Build the project
+### 3. Run tests
+
+```bash
+npm test              # Run tests once
+npm run test:watch    # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+npm run test:ui       # Run tests with UI
+```
+
+### 4. Build the project
 
 ```bash
 npm run build
 ```
 
-### 4. Test locally with environment variables
+### 5. Test stdio transport locally
 
 ```bash
+# Build first
+npm run build
+
+# Test with environment variables
 DEPLOYHQ_EMAIL="your-email@example.com" \
-DEPLOYHQ_API_KEY="your-password" \
+DEPLOYHQ_API_KEY="your-api-key" \
 DEPLOYHQ_ACCOUNT="your-account" \
 node dist/stdio.js
 ```
 
 The server will start in stdio mode and wait for JSON-RPC messages on stdin.
 
-### 5. Test with Claude Code
+### 6. Test with Claude Code
 
 Configure your local `.claude.json` to use the built version:
 
@@ -192,6 +205,29 @@ Configure your local `.claude.json` to use the built version:
   }
 }
 ```
+
+## 🧪 Testing
+
+The project includes a comprehensive test suite using Vitest:
+
+**Test Coverage:**
+- ✅ **Tool Schema Validation** - All 6 MCP tool schemas with valid/invalid inputs
+- ✅ **API Client Methods** - All DeployHQ API methods with mocked responses
+- ✅ **Error Handling** - Authentication, validation, and network errors
+- ✅ **MCP Server Factory** - Server creation and configuration
+
+**Running Tests:**
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode for development
+npm run test:coverage # Generate coverage report
+npm run test:ui       # Interactive UI for debugging
+```
+
+**Test Stats:**
+- 51 tests across 3 test suites
+- Covers tools, api-client, and mcp-server modules
+- Uses mocked fetch for isolated unit testing
 
 ## 🔒 Security
 

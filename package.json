@@ -14,6 +14,10 @@
     "dev": "tsx --watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
@@ -40,8 +44,10 @@
     "@types/node-fetch": "^2.6.13",
     "@typescript-eslint/eslint-plugin": "^8.13.0",
     "@typescript-eslint/parser": "^8.13.0",
+    "@vitest/ui": "^4.0.8",
     "eslint": "^9.14.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^4.0.8"
   }
 }
