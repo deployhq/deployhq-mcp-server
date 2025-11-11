@@ -27,7 +27,7 @@ This guide will help you configure and use the DeployHQ MCP Server with Claude D
 
 - **Claude Desktop** (for GUI) or **Claude Code CLI** (for terminal) installed
 - DeployHQ account with API access
-- Node.js 20 or higher installed
+- Node.js 16 or higher installed (Node 20+ recommended)
 - For development: Git and npm/npx
 
 ### Getting Your DeployHQ Credentials
@@ -423,12 +423,12 @@ Choose the scope that best fits your needs. For most users, `--scope user` or us
 
 **Possible Causes**:
 - Node.js not installed
-- Node.js version too old (requires v20+)
+- Node.js version too old (requires v16+, v20+ recommended)
 - PATH not configured correctly
 
 **Solution**:
-1. Install Node.js 20 or higher: `brew install node` (macOS) or download from nodejs.org
-2. Verify installation: `node --version`
+1. Install Node.js 16 or higher: `brew install node` (macOS) or download from nodejs.org
+2. Verify installation: `node --version` (should show v16.0.0 or higher)
 3. Restart Claude Desktop/Code after installing Node.js
 4. For development builds, ensure you ran `npm run build`
 

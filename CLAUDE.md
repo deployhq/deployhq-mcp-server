@@ -70,7 +70,7 @@ Restart Claude Desktop to test.
 **Shared Core:**
 - `src/mcp-server.ts`: Factory function `createMCPServer(username, password, account)` that returns a configured MCP Server instance. Used by both stdio and hosted modes.
 - `src/tools.ts`: Defines 6 MCP tools (list_projects, get_project, list_servers, list_deployments, get_deployment, create_deployment) with Zod validation schemas
-- `src/api-client.ts`: DeployHQClient class for HTTP Basic Auth API calls to DeployHQ REST API
+- `src/api-client.ts`: DeployHQClient class for HTTP Basic Auth API calls to DeployHQ REST API. Uses node-fetch for Node 16+ compatibility.
 
 **Transport Handlers (hosted mode only):**
 - `src/transports/sse-handler.ts`: Server-Sent Events transport
@@ -159,4 +159,4 @@ For stdio testing, use absolute path to `dist/stdio.js` in client configs to avo
 
 ## Important: Node Version
 
-Requires Node.js >=20.0.0 (specified in package.json engines). The stdio transport uses modern Node.js features.
+Requires Node.js >=16.0.0 (specified in package.json engines). The server uses node-fetch for HTTP requests to ensure compatibility with Node 16+, which is commonly used by Claude Desktop/Code installations.

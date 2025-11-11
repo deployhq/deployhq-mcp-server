@@ -132,8 +132,10 @@ Once configured, you can ask Claude to interact with DeployHQ:
 
 ## 📦 Prerequisites
 
-- Node.js 20+
+- **Node.js 16+** (Node 20+ recommended)
 - DeployHQ account with API access
+
+**Note**: The server uses `node-fetch` for HTTP requests, providing compatibility with Node.js 16 and above.
 
 ## 🔧 Local Development
 

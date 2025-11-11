@@ -3,6 +3,9 @@
  * Provides type-safe access to DeployHQ API endpoints
  */
 
+// Import fetch for Node 16+ compatibility
+import fetch, { RequestInit as NodeFetchRequestInit } from 'node-fetch';
+
 /**
  * Custom error class for DeployHQ API errors
  */
@@ -153,7 +156,7 @@ export class DeployHQClient {
    * @param options - Fetch options
    * @returns Parsed JSON response
    */
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(path: string, options: NodeFetchRequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${path}`;
 
     const controller = new AbortController();
@@ -161,15 +164,16 @@ export class DeployHQClient {
 
     try {
       const response = await fetch(url, {
-        ...options,
+        method: options.method || 'GET',
         headers: {
           'Authorization': this.authHeader,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...(options.headers as Record<string, string> || {}),
         },
+        body: options.body,
         signal: controller.signal,
-      });
+      } as NodeFetchRequestInit);
 
       clearTimeout(timeoutId);
 
