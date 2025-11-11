@@ -29,8 +29,22 @@
     "api",
     "model-context-protocol"
   ],
-  "author": "",
+  "author": "DeployHQ Team <support@deployhq.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deployhq/deployhq-mcp-server.git"
+  },
+  "homepage": "https://github.com/deployhq/deployhq-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/deployhq/deployhq-mcp-server/issues"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "dotenv": "^16.4.5",
