@@ -36,6 +36,12 @@ This document describes the changes made to convert the DeployHQ MCP server from
 - Updated architecture diagram to show stdio transport
 - Updated security section to emphasize local credential management
 
+#### `src/utils/logger.ts`
+- **CRITICAL FIX**: Changed all logging to use `console.error` instead of `console.log`
+- stdio transport requires stdout to be reserved exclusively for JSON-RPC messages
+- Logging to stdout causes "Unexpected token" errors in Claude Desktop
+- All logs (info, error, debug) now properly go to stderr
+
 ### 3. Unchanged Files (for hosted deployment)
 
 - `src/index.ts` - Express server entrypoint
@@ -43,7 +49,6 @@ This document describes the changes made to convert the DeployHQ MCP server from
 - `src/tools.ts` - Tool definitions (shared)
 - `src/api-client.ts` - DeployHQ API client (shared)
 - `src/transports/` - SSE and HTTP transport handlers
-- `src/utils/` - Logger and utilities
 
 ## Usage
 
@@ -143,6 +148,29 @@ After (stdio):
 4. **Local Execution**: Runs directly on user's machine
 5. **No Infrastructure**: No hosting costs or maintenance
 6. **Backwards Compatible**: Hosted version still available if needed
+
+## Troubleshooting
+
+### "Unexpected token" JSON errors in Claude Desktop
+
+**Problem**: Claude Desktop shows errors like:
+```
+Unexpected token 'I', "[INFO] 2025"... is not valid JSON
+```
+
+**Cause**: The stdio transport uses stdout exclusively for JSON-RPC messages. Any other output (logs, debug messages, etc.) to stdout will corrupt the JSON stream.
+
+**Solution**: All logging must use `console.error` (stderr) instead of `console.log` (stdout).
+
+```typescript
+// ❌ Wrong - writes to stdout, breaks stdio
+console.log('[INFO] Starting server...');
+
+// ✅ Correct - writes to stderr, preserves stdio
+console.error('[INFO] Starting server...');
+```
+
+This is why our logger uses `console.error` for all log levels.
 
 ## Next Steps
 
