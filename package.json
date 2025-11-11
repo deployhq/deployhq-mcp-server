@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Model Context Protocol (MCP) server for DeployHQ API integration",
   "main": "dist/index.js",
+  "bin": {
+    "deployhq-mcp-server": "./dist/stdio.js"
+  },
   "type": "module",
   "engines": {
     "node": ">=20.0.0"

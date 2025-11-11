@@ -17,6 +17,10 @@ build/
 .env.local
 .env.*.local
 
+# Claude Code configuration (contains credentials)
+.claude.json
+.mcp.json
+
 # IDE
 .vscode/
 .idea/

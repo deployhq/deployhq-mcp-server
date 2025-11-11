@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_USERNAME": "your-email@example.com",
+        "DEPLOYHQ_PASSWORD": "your-password",
+        "DEPLOYHQ_ACCOUNT": "your-account-name"
+      }
+    }
+  }
+}

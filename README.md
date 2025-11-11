@@ -1,15 +1,16 @@
 # DeployHQ MCP Server
 
-A hosted Model Context Protocol (MCP) server for DeployHQ that enables AI assistants like Claude Desktop and Claude Code CLI to interact with your DeployHQ deployments.
+A Model Context Protocol (MCP) server for DeployHQ that enables AI assistants like Claude Desktop and Claude Code to interact with your DeployHQ deployments.
 
 ## 🚀 Features
 
 - **Full DeployHQ API Integration**: Access projects, servers, and deployments
-- **Hosted Solution**: Deploy to Digital Ocean App Platform at `mcp.deployhq.com`
-- **Multiple Transports**: Both SSE (Server-Sent Events) and HTTP (JSON-RPC) transports
+- **Easy Installation**: Use directly with `npx` - no installation required
+- **Works with Claude Desktop & Claude Code**: stdio transport for both MCP clients
+- **Secure**: Credentials via environment variables, never stored
 - **Type-Safe**: Built with TypeScript and Zod validation
-- **Production-Ready**: Comprehensive error handling, logging, and monitoring
-- **CORS Enabled**: Cross-origin requests supported for web integrations
+- **Multiple Transports**: stdio (primary), SSE, and HTTP (optional for hosting)
+- **Production-Ready**: Comprehensive error handling and logging
 
 ## 📋 Available Tools
 
@@ -63,65 +64,76 @@ Create a new deployment for a project.
 - `use_build_cache` (boolean, optional): Use build cache
 - `use_latest` (string, optional): Use latest deployed commit as start
 
+## 🚀 Quick Start
+
+### Configuration (Works for Both Claude Desktop and Claude Code)
+
+The same configuration works for both clients. Copy from `docs/claude-config.json` and add your credentials.
+
+**For Claude Desktop:**
+
+Edit your config file:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Then restart Claude Desktop.
+
+**For Claude Code:**
+
+Add to your `.claude.json` file in your project directory.
+
+**Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_USERNAME": "your-email@example.com",
+        "DEPLOYHQ_PASSWORD": "your-password",
+        "DEPLOYHQ_ACCOUNT": "your-account-name"
+      }
+    }
+  }
+}
+```
+
+### Start Using
+
+Once configured, you can ask Claude to interact with DeployHQ:
+- "List all my DeployHQ projects"
+- "Show me the servers for project X"
+- "Get the latest deployment status for project Y"
+- "Create a new deployment for project Z"
+
+### Getting Your DeployHQ Credentials
+
+1. **Username**: Your DeployHQ login email
+2. **Password**: Your DeployHQ password
+3. **Account**: Your DeployHQ account name (visible in the URL: `https://ACCOUNT.deployhq.com`)
+
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────┐
-│  Claude Desktop │◄────────┤  MCP Server      │◄────────┤  DeployHQ   │
-│  or Code CLI    │  SSE    │  (Digital Ocean) │  HTTPS  │  API        │
-│  (Headers) ────────────────►  (Headers) ──────────────► (Basic Auth) │
-└─────────────────┘         └──────────────────┘         └─────────────┘
-         │                            ▲
-         │                            │
-         └────────────────────────────┘
-              HTTP (JSON-RPC)
+┌─────────────────┐                    ┌─────────────┐
+│  Claude Desktop │    stdio/JSON-RPC  │  DeployHQ   │
+│  or Claude Code │◄──────────────────►│  API        │
+│                 │    (via npx)       │             │
+│  Environment    │                    │             │
+│  Variables ─────┼───────────────────►│ Basic Auth  │
+└─────────────────┘                    └─────────────┘
 ```
 
-- **Claude Desktop / Code CLI**: MCP clients that connect via SSE or HTTP with custom headers
-- **MCP Server**: Express.js server that accepts per-user credentials
+- **Claude Desktop/Code**: MCP clients that spawn the server via `npx`
+- **MCP Server**: Reads credentials from environment variables, communicates via stdio
 - **DeployHQ API**: REST API with HTTP Basic Authentication
-
-### Transport Options
-
-The server supports two transport mechanisms:
-
-1. **SSE Transport** (`GET /sse`):
-   - Long-lived connection with Server-Sent Events
-   - Best for Claude Desktop and persistent connections
-   - Supports bidirectional communication via POST messages
-
-2. **HTTP Transport** (`POST /mcp`):
-   - Stateless JSON-RPC 2.0 over HTTP
-   - Best for web integrations and simple request/response workflows
-   - Each request is independent with credentials in headers
-
-### Multi-Tenant Authentication Flow
-
-1. **Customer configures Claude Desktop or Code CLI** with their DeployHQ credentials in `headers`
-2. **Credentials sent via HTTP headers** (X-DeployHQ-Username, X-DeployHQ-Password, X-DeployHQ-Account)
-3. **Server creates per-request client** using customer's credentials
-4. **API calls authenticated** with customer's DeployHQ account
-
-**Security**: Credentials are transmitted via HTTPS headers (not query strings or logs)
-
-### Configuration Differences
-
-**Claude Desktop**:
-- Config file: `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
-- Automatically loads on application start
-- JSON-based configuration
-
-**Claude Code CLI**:
-- Config file: `.claude.json` (local), `~/.config/claude/config.json` (user), or `.mcp.json` (project)
-- Loads on new session start
-- CLI-based configuration with `claude mcp add` command
 
 ## 📦 Prerequisites
 
 - Node.js 20+
 - DeployHQ account with API access
-- Digital Ocean account (for deployment)
-- `doctl` CLI (for deployment)
 
 ## 🔧 Local Development
 
@@ -138,48 +150,57 @@ cd deployhq-mcp-server
 npm install
 ```
 
-### 3. Configure environment variables
-
-Copy `.env.example` to `.env` and fill in your credentials:
+### 3. Build the project
 
 ```bash
-cp .env.example .env
+npm run build
 ```
 
-Edit `.env`:
-
-```env
-PORT=8080
-NODE_ENV=development
-LOG_LEVEL=debug
-```
-
-**Getting your DeployHQ API key**:
-1. Log in to DeployHQ
-2. Go to Settings → Security
-3. Copy your 40-character API key
-
-### 4. Run development server
+### 4. Test locally with environment variables
 
 ```bash
-npm run dev
+DEPLOYHQ_USERNAME="your-email@example.com" \
+DEPLOYHQ_PASSWORD="your-password" \
+DEPLOYHQ_ACCOUNT="your-account" \
+node dist/stdio.js
 ```
 
-The server will start on `http://localhost:8080`:
-- Health check: `http://localhost:8080/health`
-- SSE endpoint: `http://localhost:8080/sse`
+The server will start in stdio mode and wait for JSON-RPC messages on stdin.
 
-### 5. Test the API
+### 5. Test with Claude Code
 
-```bash
-# Health check
-curl http://localhost:8080/health
+Configure your local `.claude.json` to use the built version:
 
-# Should return:
-# {"status":"healthy","timestamp":"...","service":"deployhq-mcp-server","version":"1.0.0"}
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "node",
+      "args": ["/path/to/deployhq-mcp-server/dist/stdio.js"],
+      "env": {
+        "DEPLOYHQ_USERNAME": "your-email@example.com",
+        "DEPLOYHQ_PASSWORD": "your-password",
+        "DEPLOYHQ_ACCOUNT": "your-account-name"
+      }
+    }
+  }
+}
 ```
 
-## 🚀 Deployment to Digital Ocean
+## 🔒 Security
+
+- **Environment Variables**: Credentials are never stored, only passed via environment variables
+- **HTTPS**: When using npx, credentials stay local to your machine
+- **No Telemetry**: No data is sent anywhere except directly to DeployHQ API
+- **Minimal Permissions**: Use a dedicated DeployHQ user with minimum required permissions
+
+---
+
+## 🌐 Optional: Hosted Deployment
+
+The server can also be deployed as a hosted service with SSE/HTTP transports. This is useful for web integrations or shared team access.
+
+### 🚀 Deployment to Digital Ocean
 
 ### Option 1: Using the Dashboard
 
@@ -262,44 +283,41 @@ curl http://localhost:8080/health
    doctl apps logs APP_ID --follow
    ```
 
-## 🔒 Security
+### 🔒 Hosted Security
 
 - **Never commit credentials**: Use `.env` for local development (excluded by `.gitignore`)
 - **Use Digital Ocean secrets**: Store credentials as encrypted environment variables
 - **HTTPS only**: Digital Ocean provides automatic HTTPS
 - **Minimal permissions**: Use a dedicated DeployHQ user with minimum required permissions
 
-## 📊 Monitoring
+### 📊 Hosted Monitoring
 
-### Health Check
+#### Health Check
 
-The server includes a health check endpoint at `/health`:
+The hosted server includes a health check endpoint at `/health`:
 
 ```bash
 curl https://mcp.deployhq.com/health
 ```
 
-### Logs
+#### Logs
 
 View logs in Digital Ocean:
 - Dashboard: Go to your app → Runtime Logs
 - CLI: `doctl apps logs <APP_ID> --follow`
 
-### Alerts
+#### Alerts
 
 Digital Ocean will alert you on:
 - Deployment failures
 - Domain configuration issues
 - Health check failures
 
-## 🧪 Testing
-
-### Manual Testing
+### 🧪 Testing Hosted Server
 
 Test the SSE endpoint:
 
 ```bash
-# Test SSE connection
 curl -N http://localhost:8080/sse \
   -H "X-DeployHQ-Username: your-username" \
   -H "X-DeployHQ-Password: your-password" \
@@ -309,24 +327,6 @@ curl -N http://localhost:8080/sse \
 Test the HTTP transport endpoint:
 
 ```bash
-# Initialize connection
-curl -X POST http://localhost:8080/mcp \
-  -H "Content-Type: application/json" \
-  -H "X-DeployHQ-Username: your-username" \
-  -H "X-DeployHQ-Password: your-password" \
-  -H "X-DeployHQ-Account: your-account" \
-  -d '{
-    "jsonrpc": "2.0",
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2024-11-05",
-      "capabilities": {},
-      "clientInfo": {"name": "test", "version": "1.0.0"}
-    },
-    "id": 1
-  }'
-
-# List tools
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
   -H "X-DeployHQ-Username: your-username" \
@@ -336,53 +336,35 @@ curl -X POST http://localhost:8080/mcp \
     "jsonrpc": "2.0",
     "method": "tools/list",
     "params": {},
-    "id": 2
-  }'
-
-# Call a tool
-curl -X POST http://localhost:8080/mcp \
-  -H "Content-Type: application/json" \
-  -H "X-DeployHQ-Username: your-username" \
-  -H "X-DeployHQ-Password: your-password" \
-  -H "X-DeployHQ-Account: your-account" \
-  -d '{
-    "jsonrpc": "2.0",
-    "method": "tools/call",
-    "params": {
-      "name": "list_projects",
-      "arguments": {}
-    },
-    "id": 3
+    "id": 1
   }'
 ```
 
-Or use the provided test script:
-
-```bash
-# Make sure .env file has your credentials
-./test-http-transport.sh
-```
-
-### Integration Testing
-
-See `docs/USER_GUIDE.md` for Claude Desktop and Claude Code CLI configuration and testing.
+See the hosted deployment documentation for full testing examples.
 
 ## 📚 Project Structure
 
 ```
 deployhq-mcp-server/
 ├── src/
-│   ├── index.ts          # Express server entry point
-│   ├── server.ts         # MCP server setup (stdio version)
-│   ├── tools.ts          # Tool definitions and schemas
-│   └── api-client.ts     # DeployHQ API client
-├── .do/
-│   └── app.yaml          # Digital Ocean configuration
+│   ├── stdio.ts          # stdio transport entrypoint (for Claude Desktop/Code)
+│   ├── index.ts          # Express server (for hosted deployment)
+│   ├── mcp-server.ts     # Core MCP server factory (shared)
+│   ├── tools.ts          # Tool definitions and schemas (shared)
+│   ├── api-client.ts     # DeployHQ API client (shared)
+│   ├── transports/       # SSE/HTTP handlers (for hosted)
+│   └── utils/            # Logging and utilities
 ├── docs/
-│   └── USER_GUIDE.md     # User documentation
-├── Dockerfile            # Container configuration
+│   ├── claude-config.json          # Universal config template (Desktop & Code)
+│   ├── USER_GUIDE.md               # User documentation
+│   ├── DEPLOYMENT.md               # Hosted deployment guide
+│   └── HTTP_TRANSPORT.md           # HTTP transport documentation
+├── .do/
+│   └── app.yaml          # Digital Ocean configuration (optional)
+├── Dockerfile            # Container configuration (optional)
 ├── package.json          # Dependencies and scripts
 ├── tsconfig.json         # TypeScript configuration
+├── STDIO_MIGRATION.md    # stdio migration documentation
 └── README.md             # This file
 ```
 
