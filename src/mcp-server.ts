@@ -146,8 +146,8 @@ export function createMCPServer(
       log.error(`Error executing tool ${name}:`, error);
 
       // Build helpful error message with context
-      let errorMessage = (error as Error).message;
-      let suggestions: string[] = [];
+      const errorMessage = (error as Error).message;
+      const suggestions: string[] = [];
 
       // Add context-specific suggestions based on error type
       if (error instanceof Error) {
