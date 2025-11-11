@@ -18,7 +18,8 @@ This guide will help you configure and use the DeployHQ MCP Server with Claude D
 |---------|----------------|-----------------|
 | **Interface** | GUI Application | Terminal/Command-line |
 | **Config Location** | `~/Library/Application Support/Claude/` | `.claude.json` or `~/.config/claude/` |
-| **Configuration Method** | Manual JSON editing | `claude mcp add` command |
+| **Configuration Method** | Manual JSON editing | Manual JSON editing |
+| **Transport** | stdio (local process) | stdio (local process) |
 | **Session Management** | Restart application | Start new terminal session |
 | **Best For** | Visual workflows, drag-and-drop | Automation, scripting, SSH sessions |
 
@@ -26,7 +27,8 @@ This guide will help you configure and use the DeployHQ MCP Server with Claude D
 
 - **Claude Desktop** (for GUI) or **Claude Code CLI** (for terminal) installed
 - DeployHQ account with API access
-- Access to the hosted MCP server at `mcp.deployhq.com` (or your own deployment)
+- Node.js 20 or higher installed
+- For development: Git and npm/npx
 
 ### Getting Your DeployHQ Credentials
 
@@ -40,6 +42,8 @@ This guide will help you configure and use the DeployHQ MCP Server with Claude D
    - Account: Your account name (the subdomain of your DeployHQ URL)
 
 ## ⚙️ Claude Desktop Configuration
+
+**Note**: Claude Desktop requires manual JSON configuration. The `claude mcp add` CLI command is only available for Claude Code CLI.
 
 ### 1. Locate Configuration File
 
@@ -60,7 +64,11 @@ The Claude Desktop MCP configuration is stored in:
 ~/.config/Claude/claude_desktop_config.json
 ```
 
-### 2. Edit Configuration
+### 2. Choose Your Setup Method
+
+You have two options depending on your use case:
+
+#### Option A: Using the Published npm Package (Recommended for Users)
 
 Open the configuration file and add the DeployHQ MCP server:
 
@@ -68,11 +76,12 @@ Open the configuration file and add the DeployHQ MCP server:
 {
   "mcpServers": {
     "deployhq": {
-      "url": "https://mcp.deployhq.com/sse",
-      "headers": {
-        "X-DeployHQ-Username": "your-email@example.com",
-        "X-DeployHQ-Password": "your-40-character-api-key",
-        "X-DeployHQ-Account": "your-account-name"
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_USERNAME": "your-email@example.com",
+        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }
   }
@@ -81,8 +90,41 @@ Open the configuration file and add the DeployHQ MCP server:
 
 **Important**:
 - Replace the placeholder values with your actual credentials
-- Credentials are sent via **secure HTTP headers** (not query strings)
-- Headers are only transmitted over HTTPS in production
+- The `-y` flag auto-confirms package installation
+- Credentials are passed as environment variables (secure and local)
+- No separate installation needed - `npx` handles it automatically
+
+#### Option B: Using Local Development Build (For Contributors)
+
+If you're developing or testing local changes:
+
+```json
+{
+  "mcpServers": {
+    "deployhq-local": {
+      "command": "node",
+      "args": ["/absolute/path/to/deployhq-mcp-server/dist/stdio.js"],
+      "env": {
+        "DEPLOYHQ_USERNAME": "your-email@example.com",
+        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account-name"
+      }
+    }
+  }
+}
+```
+
+**Setup Steps**:
+1. Clone the repository: `git clone https://github.com/your-repo/deployhq-mcp-server.git`
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Use the **absolute path** to `dist/stdio.js` in your config
+5. Replace the placeholder credentials with your actual values
+
+**Development Workflow**:
+- After code changes, run `npm run build` to recompile
+- Restart Claude Desktop to load the updated code
+- Use `npm run dev` for watch mode (for hosted server testing only)
 
 ### 3. Restart Claude Desktop
 
@@ -100,76 +142,171 @@ Claude should respond with a list of available tools.
 
 ## 🖥️ Claude Code CLI Configuration
 
-Claude Code CLI uses a **different configuration system** than Claude Desktop. Follow these steps if you're using the command-line interface.
+Claude Code CLI supports two configuration approaches: the `claude mcp add` command (easier) or manual JSON editing (more control).
 
-### 1. Install Claude Code CLI
+**Quick Comparison**:
 
-If you haven't already:
+| Feature | `claude mcp add` Command | Manual JSON Editing |
+|---------|--------------------------|---------------------|
+| **Ease of Use** | ✅ Easiest (one command) | Requires file editing |
+| **Error Checking** | ✅ Built-in validation | Manual validation needed |
+| **Management** | ✅ Easy with CLI commands | Manual file edits |
+| **Best For** | Quick setup, beginners | Advanced users, automation |
 
-```bash
-npm install -g @anthropic-ai/claude-code
-```
+### 1. Choose Your Configuration Approach
 
-Or via Homebrew (macOS):
+#### Approach A: Using `claude mcp add` Command (Recommended)
 
-```bash
-brew install claude-code
-```
+This is the easiest way to configure the MCP server for Claude Code CLI.
 
-### 2. Add MCP Server
-
-Use the `claude mcp add` command to configure the DeployHQ MCP server:
-
-```bash
-claude mcp add deployhq http://localhost:8181/sse \
-  --transport sse \
-  --header "X-DeployHQ-Username: your-email@example.com" \
-  --header "X-DeployHQ-Password: your-40-character-api-key" \
-  --header "X-DeployHQ-Account: your-account-name"
-```
-
-**For production (hosted server)**:
+**Using the Published npm Package**:
 
 ```bash
-claude mcp add deployhq https://mcp.deployhq.com/sse \
-  --transport sse \
-  --header "X-DeployHQ-Username: your-email@example.com" \
-  --header "X-DeployHQ-Password: your-40-character-api-key" \
-  --header "X-DeployHQ-Account: your-account-name"
+claude mcp add deployhq npx -- -y deployhq-mcp-server \
+  --env DEPLOYHQ_USERNAME=your-email@example.com \
+  --env DEPLOYHQ_PASSWORD=your-40-character-api-key \
+  --env DEPLOYHQ_ACCOUNT=your-account-name
 ```
 
-**Important**:
-- Replace the placeholder values with your actual DeployHQ credentials
-- Use `http://localhost:8181/sse` for local development
-- Use `https://mcp.deployhq.com/sse` for production
-- The `--transport sse` flag specifies Server-Sent Events protocol
+**Using Local Development Build**:
 
-### 3. Verify Configuration
+```bash
+claude mcp add deployhq-local node -- /absolute/path/to/deployhq-mcp-server/dist/stdio.js \
+  --env DEPLOYHQ_USERNAME=your-email@example.com \
+  --env DEPLOYHQ_PASSWORD=your-40-character-api-key \
+  --env DEPLOYHQ_ACCOUNT=your-account-name
+```
 
-Check that the server was added successfully:
+**Important Notes**:
+- The `--` separator is required before command arguments (`-y` for npx, or the path for node)
+- Add `--scope user` to configure for all your projects (default is local)
+- Add `--scope project` for shared team configuration
+- Replace placeholder credentials with your actual values
+- For local development, use the absolute path to `dist/stdio.js`
 
+**Verify the configuration**:
 ```bash
 claude mcp list
 ```
 
-You should see:
+You should see your server listed with a checkmark indicating it's configured correctly.
 
+**What this creates**: The `claude mcp add` command automatically creates the appropriate JSON configuration in your config file, equivalent to the manual JSON approach below.
+
+#### Approach B: Manual JSON Configuration
+
+If you prefer manual configuration, need more control, or want to understand what the CLI command creates:
+
+**Locate Configuration File**:
+
+**Local (project-specific)**:
 ```
-deployhq: https://mcp.deployhq.com/sse (SSE) - ✓ Connected
+.claude.json (in your project directory)
 ```
 
-### 4. Start a New Session
+**User-wide**:
+```
+~/.config/claude/config.json
+```
 
-**Important**: The MCP server is only loaded when you start a new Claude Code session. If you added the server while Claude was already running:
+**Option A: Using the Published npm Package (Recommended for Users)**
 
-1. Exit your current Claude Code session (type `exit` or press Ctrl+D)
+Edit your configuration file and add:
+
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_USERNAME": "your-email@example.com",
+        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account-name"
+      }
+    }
+  }
+}
+```
+
+**Important**:
+- Replace the placeholder values with your actual credentials
+- The `-y` flag auto-confirms package installation
+- Credentials are passed as environment variables (secure and local)
+- No separate installation needed - `npx` handles it automatically
+
+#### Option B: Using Local Development Build (For Contributors)
+
+If you're developing or testing local changes:
+
+```json
+{
+  "mcpServers": {
+    "deployhq-local": {
+      "command": "node",
+      "args": ["/absolute/path/to/deployhq-mcp-server/dist/stdio.js"],
+      "env": {
+        "DEPLOYHQ_USERNAME": "your-email@example.com",
+        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account-name"
+      }
+    }
+  }
+}
+```
+
+**Setup Steps**:
+1. Clone the repository: `git clone https://github.com/your-repo/deployhq-mcp-server.git`
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Use the **absolute path** to `dist/stdio.js` in your config
+5. Replace the placeholder credentials with your actual values
+
+**Development Workflow**:
+- After code changes, run `npm run build` to recompile
+- Start a new Claude Code session to load the updated code
+- Test with environment variables: `DEPLOYHQ_USERNAME=email DEPLOYHQ_PASSWORD=pass DEPLOYHQ_ACCOUNT=account node dist/stdio.js`
+
+### 2. Managing MCP Servers (CLI Command Approach)
+
+If you used `claude mcp add`, you can manage servers with these commands:
+
+**List configured servers**:
+```bash
+claude mcp list
+```
+
+**View server details**:
+```bash
+claude mcp get deployhq
+```
+
+**Remove a server**:
+```bash
+claude mcp remove deployhq
+```
+
+**Update configuration** (re-add with new credentials):
+```bash
+claude mcp remove deployhq
+claude mcp add deployhq npx -- -y deployhq-mcp-server \
+  --env DEPLOYHQ_USERNAME=new-email@example.com \
+  --env DEPLOYHQ_PASSWORD=new-api-key \
+  --env DEPLOYHQ_ACCOUNT=new-account
+```
+
+### 3. Start a New Session
+
+**Important**: The MCP server is only loaded when you start a new Claude Code session.
+
+1. Exit your current Claude Code session (type `exit` or press Ctrl+D) if running
 2. Start a new session:
 
 ```bash
 claude
 ```
 
-### 5. Verify Connection
+### 4. Verify Connection
 
 In your new Claude Code session, ask:
 
@@ -187,40 +324,18 @@ Claude should respond with a list of available tools like:
 
 ### Configuration Scopes
 
-Claude Code CLI supports three configuration scopes:
+You can configure the MCP server at different scopes:
 
-- **`--scope local`** (default): Project-specific (stored in `.claude.json`)
-- **`--scope user`**: User-wide configuration
-- **`--scope project`**: Shared project configuration (`.mcp.json`)
+**Using `claude mcp add` command**:
+- Default: `--scope local` (stored in `.claude.json`)
+- User-wide: `--scope user` (stored in `~/.config/claude/config.json`)
+- Shared: `--scope project` (stored in `.mcp.json`)
 
-Example:
+**Using manual JSON editing**:
+- **Local**: Edit `.claude.json` in your project directory (project-specific)
+- **User**: Edit `~/.config/claude/config.json` (applies to all projects)
 
-```bash
-# Add for all your projects
-claude mcp add deployhq https://mcp.deployhq.com/sse \
-  --scope user \
-  --transport sse \
-  --header "X-DeployHQ-Username: your-email@example.com" \
-  --header "X-DeployHQ-Password: your-40-character-api-key" \
-  --header "X-DeployHQ-Account: your-account-name"
-```
-
-### Managing MCP Servers
-
-**Remove a server**:
-```bash
-claude mcp remove deployhq
-```
-
-**View server details**:
-```bash
-claude mcp get deployhq
-```
-
-**Import from Claude Desktop** (macOS/WSL only):
-```bash
-claude mcp add-from-claude-desktop
-```
+Choose the scope that best fits your needs. For most users, `--scope user` or user-wide configuration is recommended.
 
 ## 💬 Example Conversations
 
@@ -296,35 +411,41 @@ claude mcp add-from-claude-desktop
 **Possible Causes**:
 - Incorrect username (email) or API key
 - API key has been revoked or expired
+- Environment variables not set correctly
 
 **Solution**:
 1. Verify your credentials in DeployHQ Settings → Security
-2. Update `claude_desktop_config.json` with correct credentials
-3. Restart Claude Desktop
+2. Check environment variables in your config file's `env` section
+3. Ensure no extra spaces or quotes around credential values
+4. Restart Claude Desktop/Code
 
-### Issue: "Connection timeout"
+### Issue: "Command not found" or "node: not found"
 
 **Possible Causes**:
-- MCP server is down
-- Network connectivity issues
-- Firewall blocking the connection
+- Node.js not installed
+- Node.js version too old (requires v20+)
+- PATH not configured correctly
 
 **Solution**:
-1. Check server status at `https://mcp.deployhq.com/health`
-2. Verify your internet connection
-3. Check firewall settings
+1. Install Node.js 20 or higher: `brew install node` (macOS) or download from nodejs.org
+2. Verify installation: `node --version`
+3. Restart Claude Desktop/Code after installing Node.js
+4. For development builds, ensure you ran `npm run build`
 
-### Issue: "Tool not found"
+### Issue: "Tool not found" or MCP server not loading
 
 **Possible Causes**:
-- Claude Desktop hasn't loaded the MCP configuration
 - Configuration file has syntax errors
+- Wrong file path (for local development)
+- Missing `dist/stdio.js` file (development builds)
 
 **Solution**:
-1. Verify JSON syntax in `claude_desktop_config.json`
-2. Ensure no trailing commas or syntax errors
-3. Restart Claude Desktop
-4. Check Claude Desktop logs for errors
+1. Verify JSON syntax in your config file (no trailing commas)
+2. For npm package: Ensure `npx` is in your PATH
+3. For local development: Use absolute path to `dist/stdio.js`
+4. For local development: Run `npm run build` to generate `dist/` folder
+5. Restart Claude Desktop/Code
+6. Check logs in Claude Desktop/Code for error messages
 
 ### Issue: "Invalid project permalink"
 
@@ -353,71 +474,65 @@ claude mcp add-from-claude-desktop
 ### Issue: "No MCP servers configured" or tools not available
 
 **Possible Causes**:
-- MCP server not added to Claude Code CLI configuration
-- Using Claude Desktop configuration instead of CLI configuration
-- MCP server added after session started
+- MCP server not configured
+- Configuration file has syntax errors (manual JSON approach)
+- MCP server configuration added after session started
 
 **Solution**:
-1. Add the MCP server using the CLI command:
-   ```bash
-   claude mcp add deployhq https://mcp.deployhq.com/sse \
-     --transport sse \
-     --header "X-DeployHQ-Username: your-email@example.com" \
-     --header "X-DeployHQ-Password: your-api-key" \
-     --header "X-DeployHQ-Account: your-account"
-   ```
-2. **Exit and restart** your Claude Code session (important!)
-3. Verify with `claude mcp list`
 
-### Issue: "Failed to connect" in `claude mcp list`
+**If using `claude mcp add` command**:
+1. Run `claude mcp list` to verify the server is configured
+2. If not listed, run the `claude mcp add` command again
+3. Check for any error messages during `claude mcp add`
+4. **Exit and restart** your Claude Code session (important!)
+
+**If using manual JSON configuration**:
+1. Check your configuration file exists (`.claude.json` or `~/.config/claude/config.json`)
+2. Verify JSON syntax is correct (no trailing commas)
+3. Ensure the `mcpServers` section is properly formatted
+4. Verify the server name matches what's in your config
+5. **Exit and restart** your Claude Code session (important!)
+
+### Issue: "JSON parse error" or stdio communication errors
 
 **Possible Causes**:
-- Local MCP server not running (if using localhost)
-- Incorrect URL or port
-- Network connectivity issues
+- Logs being written to stdout instead of stderr
+- Corrupted stdio stream
+- Node.js version incompatibility
 
 **Solution**:
-
-**For local development**:
-1. Check if the server is running:
-   ```bash
-   curl http://localhost:8181/health
-   ```
-2. If not running, start the server:
-   ```bash
-   cd /path/to/deployhq-mcp-server
-   npm run dev
-   ```
-3. Verify the port matches your configuration (8181 by default)
-
-**For production**:
-1. Check server health:
-   ```bash
-   curl https://mcp.deployhq.com/health
-   ```
-2. Verify your internet connection
-3. Check if the URL is correct (https, not http)
+1. Verify Node.js version is 20 or higher: `node --version`
+2. For local development: Ensure `src/utils/logger.ts` uses `console.error()` not `console.log()`
+3. Rebuild after any code changes: `npm run build`
+4. Check Claude Code logs for specific error messages
+5. Test stdio directly: `echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | DEPLOYHQ_USERNAME=email DEPLOYHQ_PASSWORD=pass DEPLOYHQ_ACCOUNT=account node dist/stdio.js`
 
 ### Issue: Configuration changes not taking effect
 
 **Possible Causes**:
 - MCP servers are only loaded at session start
-- Configuration cached from previous session
+- npx caching old package version
+- Configuration file not saved
 
 **Solution**:
-1. **Exit Claude Code completely** (type `exit` or Ctrl+D)
-2. Start a new session: `claude`
-3. MCP servers will be reloaded from configuration
+1. Save your configuration file changes
+2. **Exit Claude Code completely** (type `exit` or Ctrl+D)
+3. For npm package users: Clear npx cache if needed: `rm -rf ~/.npm/_npx`
+4. Start a new session: `claude`
+5. MCP servers will be reloaded from configuration
 
-### Issue: Different configuration than Claude Desktop
+### Issue: Local development changes not reflected
 
-**Explanation**:
-- Claude Desktop uses: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Claude Code CLI uses: `.claude.json` (local), `~/.config/claude/config.json` (user), or `.mcp.json` (project)
+**Possible Causes**:
+- Forgot to rebuild after code changes
+- Claude Code using cached version
+- Using relative path instead of absolute path
 
 **Solution**:
-- Configure each tool separately, OR
-- Use `claude mcp add-from-claude-desktop` to import Desktop config (macOS/WSL only)
+1. Run `npm run build` after every code change
+2. Use absolute path in config: `/full/path/to/deployhq-mcp-server/dist/stdio.js`
+3. Restart Claude Code session
+4. Verify the build succeeded (check for `dist/stdio.js` file)
 
 ## 📊 Understanding Response Data
 
@@ -470,8 +585,8 @@ claude mcp add-from-claude-desktop
 
 1. **Protect Your Credentials**:
    - Never share your API key
-   - Use environment variables, not hardcoded values
-   - Rotate API keys periodically
+   - Credentials stay local (environment variables, never transmitted externally)
+   - Rotate API keys periodically in DeployHQ Settings → Security
 
 2. **Limit Permissions**:
    - Create a dedicated DeployHQ user for API access
@@ -479,14 +594,20 @@ claude mcp add-from-claude-desktop
    - Use separate credentials for different environments
 
 3. **Monitor Usage**:
-   - Regularly check deployment logs
+   - Regularly check deployment logs in DeployHQ dashboard
    - Review API usage in DeployHQ
    - Set up alerts for suspicious activity
 
-4. **Secure Your Configuration**:
-   - Protect `claude_desktop_config.json` file permissions
-   - Don't commit configuration files to version control
-   - Use encrypted storage for sensitive data
+4. **Secure Your Configuration Files**:
+   - Protect config file permissions: `chmod 600 ~/.config/claude/config.json`
+   - Don't commit configuration files with credentials to version control
+   - Add `.claude.json` to `.gitignore` for local project configs
+   - For team environments, use placeholder values and document required env vars
+
+5. **stdio Transport Security**:
+   - Credentials passed as environment variables (local process only)
+   - No network transmission of credentials (unlike HTTP/SSE transports)
+   - Each MCP server runs as a local subprocess with your user permissions
 
 ## 💡 Tips and Tricks
 
@@ -521,25 +642,36 @@ Claude can provide deployment advice:
 If you encounter issues:
 
 1. **Check this guide** for common solutions
-2. **Review server logs** at Digital Ocean dashboard
+2. **Check Claude Desktop/Code logs** for error messages
 3. **Verify API status** at DeployHQ
-4. **Open an issue** on GitHub: [your-repo-url/issues]
+4. **Test credentials** directly with the DeployHQ API
+5. **Open an issue** on GitHub with logs and configuration (redact credentials)
 
 ## 🔄 Updates and Maintenance
 
-The MCP server is updated regularly. Updates are deployed automatically on Digital Ocean App Platform when changes are pushed to the main branch.
+The MCP server npm package is updated regularly. Updates are published to npm when changes are pushed to the main branch.
 
 **Staying Updated**:
-- Watch the GitHub repository for updates
-- Check the changelog for new features
-- Update your configuration if new environment variables are added
+
+**For npm package users**:
+- The `npx -y` flag automatically uses the latest version
+- No manual updates needed - npx fetches the latest on each run
+- Check the changelog at https://github.com/your-repo/deployhq-mcp-server/releases
+
+**For local development users**:
+- Pull latest changes: `git pull origin main`
+- Reinstall dependencies if package.json changed: `npm install`
+- Rebuild: `npm run build`
+- Restart Claude Desktop/Code to load updated code
 
 ## 📚 Additional Resources
 
 - **DeployHQ API Documentation**: https://www.deployhq.com/support/api
 - **MCP Specification**: https://modelcontextprotocol.io
+- **MCP SDK Documentation**: https://github.com/modelcontextprotocol/typescript-sdk
 - **Claude Desktop**: https://claude.ai/desktop
-- **Digital Ocean Docs**: https://docs.digitalocean.com/products/app-platform/
+- **Claude Code CLI**: https://docs.anthropic.com/claude/docs/claude-code
+- **Node.js Downloads**: https://nodejs.org/
 
 ---
 
