@@ -15,22 +15,22 @@ import { log } from './utils/logger.js';
 async function main(): Promise<void> {
   try {
     // Read credentials from environment variables
-    const username = process.env.DEPLOYHQ_USERNAME;
-    const password = process.env.DEPLOYHQ_PASSWORD;
+    const email = process.env.DEPLOYHQ_EMAIL;
+    const apiKey = process.env.DEPLOYHQ_API_KEY;
     const account = process.env.DEPLOYHQ_ACCOUNT;
 
     // Validate required environment variables
-    if (!username || !password || !account) {
+    if (!email || !apiKey || !account) {
       log.error('Missing required environment variables');
-      log.error('Please set: DEPLOYHQ_USERNAME, DEPLOYHQ_PASSWORD, DEPLOYHQ_ACCOUNT');
+      log.error('Please set: DEPLOYHQ_EMAIL, DEPLOYHQ_API_KEY, DEPLOYHQ_ACCOUNT');
       process.exit(1);
     }
 
     log.info('Starting DeployHQ MCP Server in stdio mode');
-    log.debug(`Account: ${account}, Username: ${username}`);
+    log.debug(`Account: ${account}, Email: ${email}`);
 
     // Create MCP server with user credentials
-    const server = createMCPServer(username, password, account);
+    const server = createMCPServer(email, apiKey, account);
 
     // Create stdio transport
     const transport = new StdioServerTransport();

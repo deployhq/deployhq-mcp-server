@@ -6,10 +6,10 @@ echo "=============================================="
 echo ""
 
 # Check if credentials are set
-if [ -z "$DEPLOYHQ_USERNAME" ] || [ -z "$DEPLOYHQ_PASSWORD" ] || [ -z "$DEPLOYHQ_ACCOUNT" ]; then
+if [ -z "$DEPLOYHQ_EMAIL" ] || [ -z "$DEPLOYHQ_API_KEY" ] || [ -z "$DEPLOYHQ_ACCOUNT" ]; then
     echo "Error: Please set environment variables:"
-    echo "  export DEPLOYHQ_USERNAME='your-email@example.com'"
-    echo "  export DEPLOYHQ_PASSWORD='your-password'"
+    echo "  export DEPLOYHQ_EMAIL='your-email@example.com'"
+    echo "  export DEPLOYHQ_API_KEY='your-api-key'"
     echo "  export DEPLOYHQ_ACCOUNT='your-account'"
     exit 1
 fi

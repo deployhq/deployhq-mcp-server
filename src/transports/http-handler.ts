@@ -25,8 +25,8 @@ export function setupHTTPRoutes(app: Express): void {
     log.info('New HTTP transport request');
 
     // Extract credentials from custom headers
-    const username = req.headers['x-deployhq-username'] as string || process.env.DEPLOYHQ_USERNAME;
-    const password = req.headers['x-deployhq-password'] as string || process.env.DEPLOYHQ_PASSWORD;
+    const username = req.headers['x-deployhq-email'] as string || process.env.DEPLOYHQ_EMAIL;
+    const password = req.headers['x-deployhq-api-key'] as string || process.env.DEPLOYHQ_API_KEY;
     const account = req.headers['x-deployhq-account'] as string || process.env.DEPLOYHQ_ACCOUNT;
 
     // Validate credentials

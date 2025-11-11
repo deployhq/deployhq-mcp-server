@@ -20,8 +20,8 @@ export function setupSSERoutes(app: Express): void {
     log.info('New SSE connection');
 
     // Extract credentials from custom headers
-    const username = req.headers['x-deployhq-username'] as string || process.env.DEPLOYHQ_USERNAME;
-    const password = req.headers['x-deployhq-password'] as string || process.env.DEPLOYHQ_PASSWORD;
+    const username = req.headers['x-deployhq-email'] as string || process.env.DEPLOYHQ_EMAIL;
+    const password = req.headers['x-deployhq-api-key'] as string || process.env.DEPLOYHQ_API_KEY;
     const account = req.headers['x-deployhq-account'] as string || process.env.DEPLOYHQ_ACCOUNT;
 
     // Validate credentials
@@ -29,7 +29,7 @@ export function setupSSERoutes(app: Express): void {
       log.error('Missing credentials in request headers');
       res.status(401).json({
         error: 'Unauthorized',
-        message: 'Missing required headers: X-DeployHQ-Username, X-DeployHQ-Password, X-DeployHQ-Account',
+        message: 'Missing required headers: X-DeployHQ-Email, X-DeployHQ-API-Key, X-DeployHQ-Account',
       });
       return;
     }

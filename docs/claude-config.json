@@ -4,8 +4,8 @@
       "command": "npx",
       "args": ["-y", "deployhq-mcp-server"],
       "env": {
-        "DEPLOYHQ_USERNAME": "your-email@example.com",
-        "DEPLOYHQ_PASSWORD": "your-password",
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-api-key",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }

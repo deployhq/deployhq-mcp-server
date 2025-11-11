@@ -91,8 +91,8 @@ Add to your `.claude.json` file in your project directory.
       "command": "npx",
       "args": ["-y", "deployhq-mcp-server"],
       "env": {
-        "DEPLOYHQ_USERNAME": "your-email@example.com",
-        "DEPLOYHQ_PASSWORD": "your-password",
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-password",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }
@@ -159,8 +159,8 @@ npm run build
 ### 4. Test locally with environment variables
 
 ```bash
-DEPLOYHQ_USERNAME="your-email@example.com" \
-DEPLOYHQ_PASSWORD="your-password" \
+DEPLOYHQ_EMAIL="your-email@example.com" \
+DEPLOYHQ_API_KEY="your-password" \
 DEPLOYHQ_ACCOUNT="your-account" \
 node dist/stdio.js
 ```
@@ -178,8 +178,8 @@ Configure your local `.claude.json` to use the built version:
       "command": "node",
       "args": ["/path/to/deployhq-mcp-server/dist/stdio.js"],
       "env": {
-        "DEPLOYHQ_USERNAME": "your-email@example.com",
-        "DEPLOYHQ_PASSWORD": "your-password",
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-password",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }
@@ -224,8 +224,8 @@ The server can also be deployed as a hosted service with SSE/HTTP transports. Th
 4. **Set environment variables**:
    - Go to App Settings → Environment Variables
    - Add the following as **encrypted** variables:
-     - `DEPLOYHQ_USERNAME`
-     - `DEPLOYHQ_PASSWORD`
+     - `DEPLOYHQ_EMAIL`
+     - `DEPLOYHQ_API_KEY`
      - `DEPLOYHQ_ACCOUNT`
    - Add these as regular variables:
      - `NODE_ENV=production`
@@ -319,8 +319,8 @@ Test the SSE endpoint:
 
 ```bash
 curl -N http://localhost:8080/sse \
-  -H "X-DeployHQ-Username: your-username" \
-  -H "X-DeployHQ-Password: your-password" \
+  -H "X-DeployHQ-Email: your-email@example.com" \
+  -H "X-DeployHQ-API-Key: your-api-key" \
   -H "X-DeployHQ-Account: your-account"
 ```
 
@@ -329,8 +329,8 @@ Test the HTTP transport endpoint:
 ```bash
 curl -X POST http://localhost:8080/mcp \
   -H "Content-Type: application/json" \
-  -H "X-DeployHQ-Username: your-username" \
-  -H "X-DeployHQ-Password: your-password" \
+  -H "X-DeployHQ-Email: your-email@example.com" \
+  -H "X-DeployHQ-API-Key: your-api-key" \
   -H "X-DeployHQ-Account: your-account" \
   -d '{
     "jsonrpc": "2.0",

@@ -79,8 +79,8 @@ Open the configuration file and add the DeployHQ MCP server:
       "command": "npx",
       "args": ["-y", "deployhq-mcp-server"],
       "env": {
-        "DEPLOYHQ_USERNAME": "your-email@example.com",
-        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-40-character-api-key",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }
@@ -105,8 +105,8 @@ If you're developing or testing local changes:
       "command": "node",
       "args": ["/absolute/path/to/deployhq-mcp-server/dist/stdio.js"],
       "env": {
-        "DEPLOYHQ_USERNAME": "your-email@example.com",
-        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-40-character-api-key",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }
@@ -163,8 +163,8 @@ This is the easiest way to configure the MCP server for Claude Code CLI.
 
 ```bash
 claude mcp add deployhq npx -- -y deployhq-mcp-server \
-  --env DEPLOYHQ_USERNAME=your-email@example.com \
-  --env DEPLOYHQ_PASSWORD=your-40-character-api-key \
+  --env DEPLOYHQ_EMAIL=your-email@example.com \
+  --env DEPLOYHQ_API_KEY=your-40-character-api-key \
   --env DEPLOYHQ_ACCOUNT=your-account-name
 ```
 
@@ -172,8 +172,8 @@ claude mcp add deployhq npx -- -y deployhq-mcp-server \
 
 ```bash
 claude mcp add deployhq-local node -- /absolute/path/to/deployhq-mcp-server/dist/stdio.js \
-  --env DEPLOYHQ_USERNAME=your-email@example.com \
-  --env DEPLOYHQ_PASSWORD=your-40-character-api-key \
+  --env DEPLOYHQ_EMAIL=your-email@example.com \
+  --env DEPLOYHQ_API_KEY=your-40-character-api-key \
   --env DEPLOYHQ_ACCOUNT=your-account-name
 ```
 
@@ -220,8 +220,8 @@ Edit your configuration file and add:
       "command": "npx",
       "args": ["-y", "deployhq-mcp-server"],
       "env": {
-        "DEPLOYHQ_USERNAME": "your-email@example.com",
-        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-40-character-api-key",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }
@@ -246,8 +246,8 @@ If you're developing or testing local changes:
       "command": "node",
       "args": ["/absolute/path/to/deployhq-mcp-server/dist/stdio.js"],
       "env": {
-        "DEPLOYHQ_USERNAME": "your-email@example.com",
-        "DEPLOYHQ_PASSWORD": "your-40-character-api-key",
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-40-character-api-key",
         "DEPLOYHQ_ACCOUNT": "your-account-name"
       }
     }
@@ -265,7 +265,7 @@ If you're developing or testing local changes:
 **Development Workflow**:
 - After code changes, run `npm run build` to recompile
 - Start a new Claude Code session to load the updated code
-- Test with environment variables: `DEPLOYHQ_USERNAME=email DEPLOYHQ_PASSWORD=pass DEPLOYHQ_ACCOUNT=account node dist/stdio.js`
+- Test with environment variables: `DEPLOYHQ_EMAIL=email DEPLOYHQ_API_KEY=pass DEPLOYHQ_ACCOUNT=account node dist/stdio.js`
 
 ### 2. Managing MCP Servers (CLI Command Approach)
 
@@ -290,8 +290,8 @@ claude mcp remove deployhq
 ```bash
 claude mcp remove deployhq
 claude mcp add deployhq npx -- -y deployhq-mcp-server \
-  --env DEPLOYHQ_USERNAME=new-email@example.com \
-  --env DEPLOYHQ_PASSWORD=new-api-key \
+  --env DEPLOYHQ_EMAIL=new-email@example.com \
+  --env DEPLOYHQ_API_KEY=new-api-key \
   --env DEPLOYHQ_ACCOUNT=new-account
 ```
 
@@ -505,7 +505,7 @@ Choose the scope that best fits your needs. For most users, `--scope user` or us
 2. For local development: Ensure `src/utils/logger.ts` uses `console.error()` not `console.log()`
 3. Rebuild after any code changes: `npm run build`
 4. Check Claude Code logs for specific error messages
-5. Test stdio directly: `echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | DEPLOYHQ_USERNAME=email DEPLOYHQ_PASSWORD=pass DEPLOYHQ_ACCOUNT=account node dist/stdio.js`
+5. Test stdio directly: `echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | DEPLOYHQ_EMAIL=email DEPLOYHQ_API_KEY=pass DEPLOYHQ_ACCOUNT=account node dist/stdio.js`
 
 ### Issue: Configuration changes not taking effect
 
