@@ -159,6 +159,4 @@ For stdio testing, use absolute path to `dist/stdio.js` in client configs to avo
 
 ## Important: Node Version
 
-**Runtime**: Requires Node.js >=16.0.0 (specified in package.json engines). The server uses node-fetch for HTTP requests to ensure compatibility with Node 16+, which is commonly used by Claude Desktop/Code installations.
-
-**Development**: Requires Node.js >=18.0.0 for development tools (ESLint 9.x requires Node 18.18+). If you're on Node 16, you can still build and test, but skip linting with `npm run build && npm run type-check`.
+Requires Node.js >=18.0.0 (specified in package.json engines). Node 18+ is required for both runtime and development tools (ESLint 9.x, Vitest). The server uses node-fetch for HTTP requests.

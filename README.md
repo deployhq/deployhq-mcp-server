@@ -132,16 +132,12 @@ Once configured, you can ask Claude to interact with DeployHQ:
 
 ## 📦 Prerequisites
 
-- **Node.js 16+** (Node 20+ recommended)
+- **Node.js 18+** (Node 20+ recommended)
 - DeployHQ account with API access
 
-**Note**: The server uses `node-fetch` for HTTP requests, providing compatibility with Node.js 16 and above.
+**Note**: The server uses `node-fetch` for HTTP requests. Node 18+ is required for development tools (ESLint, Vitest).
 
 ## 🔧 Local Development
-
-**Development Requirements:**
-- Node.js 18+ (for ESLint 9.x and other dev tools)
-- Runtime supports Node.js 16+
 
 ### 1. Clone the repository
 
