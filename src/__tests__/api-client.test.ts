@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Response } from 'node-fetch';
 import {
   DeployHQClient,
   DeployHQError,
@@ -13,6 +14,11 @@ vi.mock('node-fetch', () => ({
 
 import fetch from 'node-fetch';
 const mockFetch = fetch as unknown as ReturnType<typeof vi.fn>;
+
+// Helper to create mock Response objects
+function createMockResponse(data: Partial<Response>): Partial<Response> {
+  return data;
+}
 
 describe('DeployHQClient', () => {
   beforeEach(() => {
@@ -119,11 +125,11 @@ describe('DeployHQClient', () => {
           { name: 'Project 2', permalink: 'project-2' },
         ];
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 200,
           json: async () => mockProjects,
-        } as any);
+        }));
 
         const result = await client.listProjects();
 
@@ -141,19 +147,19 @@ describe('DeployHQClient', () => {
       });
 
       it('should throw AuthenticationError on 401', async () => {
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: false,
           status: 401,
-        } as any);
+        }));
 
         await expect(client.listProjects()).rejects.toThrow(AuthenticationError);
       });
 
       it('should throw AuthenticationError on 403', async () => {
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: false,
           status: 403,
-        } as any);
+        }));
 
         await expect(client.listProjects()).rejects.toThrow(AuthenticationError);
       });
@@ -163,11 +169,11 @@ describe('DeployHQClient', () => {
       it('should fetch project by permalink', async () => {
         const mockProject = { name: 'Test Project', permalink: 'test-project' };
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 200,
           json: async () => mockProject,
-        } as any);
+        }));
 
         const result = await client.getProject('test-project');
 
@@ -186,11 +192,11 @@ describe('DeployHQClient', () => {
           { identifier: 'server-2', name: 'Staging' },
         ];
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 200,
           json: async () => mockServers,
-        } as any);
+        }));
 
         const result = await client.listServers('test-project');
 
@@ -209,11 +215,11 @@ describe('DeployHQClient', () => {
           pagination: { total: 1, total_pages: 1, per_page: 30, current_page: 1 },
         };
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 200,
           json: async () => mockResponse,
-        } as any);
+        }));
 
         const result = await client.listDeployments('test-project');
 
@@ -230,11 +236,11 @@ describe('DeployHQClient', () => {
           pagination: { total: 10, total_pages: 2, per_page: 30, current_page: 2 },
         };
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 200,
           json: async () => mockResponse,
-        } as any);
+        }));
 
         await client.listDeployments('test-project', 2);
 
@@ -250,11 +256,11 @@ describe('DeployHQClient', () => {
           pagination: { total: 1, total_pages: 1, per_page: 30, current_page: 1 },
         };
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 200,
           json: async () => mockResponse,
-        } as any);
+        }));
 
         await client.listDeployments('test-project', undefined, 'server-123');
 
@@ -269,11 +275,11 @@ describe('DeployHQClient', () => {
       it('should fetch specific deployment', async () => {
         const mockDeployment = { identifier: 'deploy-1', status: 'completed' };
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 200,
           json: async () => mockDeployment,
-        } as any);
+        }));
 
         const result = await client.getDeployment('test-project', 'deploy-1');
 
@@ -294,11 +300,11 @@ describe('DeployHQClient', () => {
           end_revision: 'def456',
         };
 
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: true,
           status: 201,
           json: async () => mockDeployment,
-        } as any);
+        }));
 
         const result = await client.createDeployment('test-project', params);
 
@@ -313,11 +319,11 @@ describe('DeployHQClient', () => {
       });
 
       it('should throw ValidationError on 422', async () => {
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: false,
           status: 422,
           json: async () => ({ error: 'Invalid params' }),
-        } as any);
+        }));
 
         await expect(
           client.createDeployment('test-project', {
@@ -337,12 +343,12 @@ describe('DeployHQClient', () => {
       });
 
       it('should handle non-OK responses', async () => {
-        mockFetch.mockResolvedValueOnce({
+        mockFetch.mockResolvedValueOnce(createMockResponse({
           ok: false,
           status: 500,
           statusText: 'Internal Server Error',
           text: async () => 'Server error',
-        } as any);
+        }));
 
         await expect(client.listProjects()).rejects.toThrow(DeployHQError);
       });
