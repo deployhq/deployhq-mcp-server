@@ -21,18 +21,18 @@ This repository uses GitHub Actions for continuous integration and automated npm
 
 ### 2. Publish Workflow (`publish.yml`)
 
-**Triggers**: Automatically after CI workflow succeeds on `main` branch
+**Triggers**: When a version tag is pushed (e.g., `v1.0.0`)
 
 **What it does**:
-1. Waits for CI workflow to complete successfully
-2. Checks out code and installs dependencies
-3. Builds the project
-4. Extracts version from `package.json`
+1. Checks out code and installs dependencies
+2. Builds the project
+3. Extracts version from `package.json`
+4. Verifies tag version matches package.json version
 5. Verifies package contents with `npm pack --dry-run`
 6. Publishes to npm registry (public package)
-7. Creates GitHub Release with tag `v{version}`
+7. Creates GitHub Release with version notes
 
-**Dependencies**: Only runs if CI workflow passes
+**Note**: CI workflow should pass before creating release tags
 
 ## Setup Requirements
 
@@ -58,31 +58,44 @@ The `GITHUB_TOKEN` is automatically provided by GitHub Actions - no setup needed
 
 ## Publishing Process
 
-### Automatic Publishing (Recommended)
+### Tag-Based Publishing (Recommended)
 
-When you merge to `main`:
+Releases are triggered by pushing version tags:
 
 ```bash
-# 1. Create PR with version bump
-git checkout -b release/v1.0.1
-npm version patch  # or minor, major
-git push origin release/v1.0.1
+# 1. Ensure you're on main with latest changes
+git checkout main
+git pull origin main
 
-# 2. Create and merge PR to main
+# 2. Ensure CI is passing
+# Check: https://github.com/deployhq/deployhq-mcp-server/actions
+
+# 3. Bump version in package.json
+npm version patch  # 1.0.0 -> 1.0.1 (bug fixes)
+npm version minor  # 1.0.0 -> 1.1.0 (new features)
+npm version major  # 1.0.0 -> 2.0.0 (breaking changes)
+
+# 4. Push commit and tag
+git push origin main
+git push origin --tags
+
 # GitHub Actions will automatically:
-# - Run CI tests
-# - Publish to npm (if CI passes)
+# - Build the project
+# - Verify tag matches package.json version
+# - Publish to npm
 # - Create GitHub release
 ```
 
 ### Manual Publishing (Not Recommended)
 
-If you need to publish manually:
+If automated publishing fails, you can publish manually:
 
 ```bash
 npm run build
 npm publish
 ```
+
+**Important**: Only use manual publishing as a last resort. The automated workflow is more reliable and creates proper GitHub releases.
 
 ## Version Management
 
@@ -118,15 +131,23 @@ Follow semantic versioning (SemVer):
 │  ├─ Test (108 tests)                                │
 │  ├─ Build                                           │
 │  └─ Verify artifacts                                │
+└─────────────────────────────────────────────────────┘
+
+                 (manually create release)
+
+┌─────────────────────────────────────────────────────┐
+│  Developer creates version tag                      │
+│  $ npm version patch                                │
+│  $ git push origin main --tags                      │
 └────────────────┬────────────────────────────────────┘
                  │
-                 │ (only on main branch)
                  ▼
 ┌─────────────────────────────────────────────────────┐
 │  Publish Workflow (publish.yml)                     │
-│  ├─ Wait for CI to succeed                          │
+│  ├─ Triggered by version tag (v*)                   │
 │  ├─ Build project                                   │
-│  ├─ Verify package                                  │
+│  ├─ Verify tag matches package.json                 │
+│  ├─ Verify package contents                         │
 │  ├─ Publish to npm                                  │
 │  └─ Create GitHub Release                           │
 └─────────────────────────────────────────────────────┘

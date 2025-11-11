@@ -574,6 +574,10 @@ Contributions are welcome! Please:
 4. Add tests if applicable
 5. Submit a pull request
 
+### For Maintainers
+
+See [RELEASING.md](RELEASING.md) for instructions on creating releases and publishing to npm.
+
 ## 📄 License
 
 MIT License - see LICENSE file for details
@@ -582,7 +586,7 @@ MIT License - see LICENSE file for details
 
 - **DeployHQ API Documentation**: https://www.deployhq.com/support/api
 - **MCP Documentation**: https://modelcontextprotocol.io
-- **Issues**: https://github.com/your-username/deployhq-mcp-server/issues
+- **Issues**: https://github.com/deployhq/deployhq-mcp-server/issues
 
 ## 🔗 Related Links
 
