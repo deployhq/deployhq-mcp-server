@@ -139,6 +139,10 @@ Once configured, you can ask Claude to interact with DeployHQ:
 
 ## 🔧 Local Development
 
+**Development Requirements:**
+- Node.js 18+ (for ESLint 9.x and other dev tools)
+- Runtime supports Node.js 16+
+
 ### 1. Clone the repository
 
 ```bash
