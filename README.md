@@ -85,7 +85,17 @@ Create a new deployment for a project.
 
 ## 🚀 Quick Start
 
-### Configuration (Works for Both Claude Desktop and Claude Code)
+### Easy Installation with Claude Code
+
+The fastest way to install for Claude Code:
+
+```bash
+claude mcp add --transport stdio deployhq --env DEPLOYHQ_EMAIL=your-email@example.com --env DEPLOYHQ_API_KEY=your-api-key --env DEPLOYHQ_ACCOUNT=your-account -- npx -y deployhq-mcp-server
+```
+
+Replace `your-email@example.com`, `your-api-key`, and `your-account` with your actual DeployHQ credentials.
+
+### Manual Configuration (Works for Both Claude Desktop and Claude Code)
 
 The same configuration works for both clients. Copy from `docs/claude-config.json` and add your credentials.
 
