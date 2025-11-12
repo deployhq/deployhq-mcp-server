@@ -169,6 +169,7 @@ export class DeployHQClient {
           'Authorization': this.authHeader,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'User-Agent': 'DeployHQ-MCP-Server/1.0.0',
           ...(options.headers as Record<string, string> || {}),
         },
         body: options.body,
@@ -312,6 +313,7 @@ export class DeployHQClient {
         headers: {
           'Authorization': this.authHeader,
           'Accept': 'text/plain',
+          'User-Agent': 'DeployHQ-MCP-Server/1.0.0',
         },
         signal: controller.signal,
       } as NodeFetchRequestInit);
