@@ -583,6 +583,90 @@ Choose the scope that best fits your needs. For most users, `--scope user` or us
 
 ## 🔒 Security Best Practices
 
+### Read-Only Mode (Optional)
+
+**By default, the MCP server allows all operations, including creating deployments.** This is the recommended configuration for most users who want full functionality.
+
+For users who want additional protection against accidental deployments, the server includes an **optional read-only mode** that can be enabled to block deployment creation while still allowing read operations.
+
+**Default Behavior (No Configuration Needed):**
+- ✅ Deployments are **allowed by default**
+- ✅ All operations work: list projects, get details, and create deployments
+- ✅ Full functionality out of the box
+
+**When you might want to enable read-only mode:**
+- You want extra protection against accidental deployments via AI
+- You're connecting to production environments and want an additional safety layer
+- You only need read access to monitor deployments
+- You're still testing the integration and want to be cautious
+
+**Important:** Read-only mode is **completely optional**. The server works fully without it.
+
+**Enabling Read-Only Mode:**
+
+If you want to prevent deployments through the MCP server, you can enable read-only mode in two ways:
+
+**Method 1: Environment Variable**
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account",
+        "DEPLOYHQ_READ_ONLY": "true"
+      }
+    }
+  }
+}
+```
+
+**Method 2: CLI Flag**
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "deployhq-mcp-server",
+        "--read-only"
+      ],
+      "env": {
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account"
+      }
+    }
+  }
+}
+```
+
+**Configuration Precedence:**
+1. CLI flag `--read-only` (highest priority)
+2. Environment variable `DEPLOYHQ_READ_ONLY`
+3. Default value: `false` (deployments allowed)
+
+**Accepted Values:**
+- Enable read-only: `"true"`, `"1"`, `"yes"` (case-insensitive)
+- Disable read-only: `"false"`, `"0"`, `"no"` (case-insensitive)
+
+**When to Enable Read-Only Mode:**
+- You want to prevent accidental deployments via AI
+- You're connecting to production environments
+- You want an extra layer of protection
+- You only need read access to monitor deployments
+
+**Security Warning:**
+- Deployment logs may contain environment variables, API keys, and secrets
+- Exercise extreme caution when using tools that retrieve logs
+- Consider using separate API keys for read-only vs. read-write operations
+
+### Additional Security Best Practices
+
 1. **Protect Your Credentials**:
    - Never share your API key
    - Credentials stay local (environment variables, never transmitted externally)

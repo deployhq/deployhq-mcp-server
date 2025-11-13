@@ -9,6 +9,7 @@ import { log } from './utils/logger.js';
 import { tools } from './tools.js';
 import { setupSSERoutes } from './transports/sse-handler.js';
 import { setupHTTPRoutes } from './transports/http-handler.js';
+import { parseServerConfig, getConfigSource } from './config.js';
 
 // Load environment variables
 dotenv.config();
@@ -18,6 +19,22 @@ dotenv.config();
  */
 async function main(): Promise<void> {
   try {
+    // Parse server configuration (read-only mode, etc.)
+    const config = parseServerConfig();
+    const configSource = getConfigSource();
+
+    log.info('Starting DeployHQ MCP Server in hosted mode');
+    log.info(
+      `Read-only mode: ${config.readOnlyMode ? 'ENABLED' : 'DISABLED'} (${configSource})`
+    );
+
+    if (config.readOnlyMode) {
+      log.info(
+        '⚠️  Server is running in read-only mode. Deployment creation is disabled.'
+      );
+      log.info('   To enable deployments, set DEPLOYHQ_READ_ONLY=false or use --read-only=false');
+    }
+
     // Create Express app
     const app = express();
     const port = parseInt(process.env.PORT || '8080', 10);
@@ -60,9 +77,9 @@ async function main(): Promise<void> {
       });
     });
 
-    // Setup transport routes
-    setupSSERoutes(app);
-    setupHTTPRoutes(app);
+    // Setup transport routes with configuration
+    setupSSERoutes(app, config);
+    setupHTTPRoutes(app, config);
 
     // Start server
     app.listen(port, () => {

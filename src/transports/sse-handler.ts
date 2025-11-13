@@ -7,11 +7,12 @@ import { Express } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { log } from '../utils/logger.js';
 import { createMCPServer } from '../mcp-server.js';
+import { ServerConfig } from '../config.js';
 
 /**
  * Setup SSE routes for MCP protocol
  */
-export function setupSSERoutes(app: Express): void {
+export function setupSSERoutes(app: Express, config: ServerConfig): void {
   // Store active transports by session ID
   const transports = new Map<string, SSEServerTransport>();
 
@@ -38,7 +39,7 @@ export function setupSSERoutes(app: Express): void {
 
     try {
       const transport = new SSEServerTransport('/message', res);
-      const server = createMCPServer(username, password, account);
+      const server = createMCPServer(username, password, account, config);
 
       // Store transport for message routing
       transports.set(transport.sessionId, transport);

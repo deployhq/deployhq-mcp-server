@@ -10,6 +10,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { DeployHQClient } from './api-client.js';
 import { log } from './utils/logger.js';
+import { ServerConfig } from './config.js';
 import {
   tools,
   ListProjectsSchema,
@@ -27,7 +28,8 @@ import {
 export function createMCPServer(
   username: string,
   password: string,
-  account: string
+  account: string,
+  config: ServerConfig = { readOnlyMode: false }
 ): Server {
   // Create DeployHQ client with user credentials
   const client = new DeployHQClient({
@@ -119,6 +121,20 @@ export function createMCPServer(
         }
 
         case 'create_deployment': {
+          // Check if server is in read-only mode
+          if (config.readOnlyMode) {
+            log.info('⚠️  Deployment creation blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Deployment creation is disabled for security.\n\n' +
+              'To disable read-only mode:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode can be enabled to prevent ' +
+              'accidental deployments when using AI assistants.'
+            );
+          }
+
           const validatedArgs = CreateDeploymentSchema.parse(args);
           const { project, ...deploymentParams } = validatedArgs;
           log.debug(`Creating deployment for project: ${project}`);
@@ -207,4 +223,42 @@ export function createMCPServer(
   });
 
   return server;
+}
+
+/**
+ * Test helper: Invoke a tool by name for testing purposes
+ * This provides a clean interface for tests without exposing internal implementation
+ *
+ * @internal - For testing only
+ */
+export async function invokeToolForTest(
+  server: Server,
+  toolName: string,
+  args: Record<string, unknown>
+): Promise<{
+  content: Array<{ type: string; text: string }>;
+  isError?: boolean;
+}> {
+  const request = {
+    method: 'tools/call' as const,
+    params: {
+      name: toolName,
+      arguments: args,
+    },
+  };
+
+  // Access the internal handler through the documented setRequestHandler API
+  // This is still accessing internals but isolates it to one place
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handlers = (server as any)._requestHandlers;
+  const handler = handlers.get('tools/call');
+
+  if (!handler) {
+    throw new Error('Tool handler not found - server not properly initialized');
+  }
+
+  return handler(request) as Promise<{
+    content: Array<{ type: string; text: string }>;
+    isError?: boolean;
+  }>;
 }

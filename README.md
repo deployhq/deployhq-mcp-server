@@ -244,6 +244,16 @@ Example:
 - Project permalinks are case-sensitive
 - Check that you have access to the project in DeployHQ
 
+### Deployment Creation Blocked
+
+**Problem**: "Server is running in read-only mode" error when trying to create deployments
+
+**Solution**:
+- Read-only mode is disabled by default, but you may have enabled it
+- To disable read-only mode, set `DEPLOYHQ_READ_ONLY=false` in your environment variables
+- Or use the `--read-only=false` CLI flag
+- See the [Security](#-security) section for detailed instructions on read-only mode
+
 ### Deployment Fails
 
 **Problem**: Deployment created but fails immediately
@@ -395,10 +405,84 @@ npm run test:ui       # Interactive UI for debugging
 
 ## 🔒 Security
 
+### Read-Only Mode (Optional)
+
+**By default, the MCP server allows all operations, including creating deployments.** This is the recommended configuration for most users.
+
+For users who want additional protection against accidental deployments, the server includes an **optional read-only mode** that can be enabled to block deployment creation.
+
+**Default Behavior (No Configuration Needed):**
+- ✅ Deployments are **allowed by default**
+- ✅ All operations work: list, get, and create deployments
+- ✅ Full functionality out of the box
+
+**When you might want to enable read-only mode:**
+- You want extra protection against accidental deployments via AI
+- You're connecting to production environments and want an additional safety layer
+- You only need read access to monitor deployments
+- You're still testing the integration and want to be cautious
+
+**Important:** Read-only mode is **completely optional**. The server works fully without it.
+
+**How to enable read-only mode:**
+
+Via environment variable:
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account",
+        "DEPLOYHQ_READ_ONLY": "true"
+      }
+    }
+  }
+}
+```
+
+Via CLI flag:
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "deployhq-mcp-server",
+        "--read-only"
+      ],
+      "env": {
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account"
+      }
+    }
+  }
+}
+```
+
+**Configuration precedence:**
+1. CLI flag `--read-only` (highest priority)
+2. Environment variable `DEPLOYHQ_READ_ONLY`
+3. Default value: `false` (deployments allowed)
+
+### Additional Security Notes
+
+- **Deployment Logs May Contain Secrets**: Deployment logs can include environment variables, API keys, and other sensitive information. Exercise caution when using tools that retrieve logs, especially with third-party AI services.
+
+- **Use Least-Privilege API Keys**: Create dedicated API keys with minimum required permissions for MCP access. Consider separate keys for read-only vs. read-write operations.
+
+- **Audit MCP Activity**: Monitor MCP usage, especially in production environments. Review logs regularly for unexpected behavior.
+
 - **Environment Variables**: Credentials are never stored, only passed via environment variables
+
 - **HTTPS**: When using npx, credentials stay local to your machine
+
 - **No Telemetry**: No data is sent anywhere except directly to DeployHQ API
-- **Minimal Permissions**: Use a dedicated DeployHQ user with minimum required permissions
 
 ---
 
