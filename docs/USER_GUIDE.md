@@ -585,16 +585,26 @@ Choose the scope that best fits your needs. For most users, `--scope user` or us
 
 ### Read-Only Mode (Optional)
 
-The DeployHQ MCP Server supports an optional **read-only mode** that can be enabled to prevent deployment creation when using AI assistants.
+**By default, the MCP server allows all operations, including creating deployments.** This is the recommended configuration for most users who want full functionality.
 
-**Default Behavior:**
-- ✅ All operations work by default (list, get, create deployments)
-- ✅ Deployments can be created through AI assistants
-- ⚠️ Consider enabling read-only mode in production environments for extra protection
+For users who want additional protection against accidental deployments, the server includes an **optional read-only mode** that can be enabled to block deployment creation while still allowing read operations.
+
+**Default Behavior (No Configuration Needed):**
+- ✅ Deployments are **allowed by default**
+- ✅ All operations work: list projects, get details, and create deployments
+- ✅ Full functionality out of the box
+
+**When you might want to enable read-only mode:**
+- You want extra protection against accidental deployments via AI
+- You're connecting to production environments and want an additional safety layer
+- You only need read access to monitor deployments
+- You're still testing the integration and want to be cautious
+
+**Important:** Read-only mode is **completely optional**. The server works fully without it.
 
 **Enabling Read-Only Mode:**
 
-If you want to prevent deployments through the MCP server (read-only access), you can enable read-only mode in two ways:
+If you want to prevent deployments through the MCP server, you can enable read-only mode in two ways:
 
 **Method 1: Environment Variable**
 ```json
