@@ -6,10 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMCPServer } from '../mcp-server.js';
 import type { ServerConfig } from '../config.js';
-import {
-  CallToolRequestSchema,
-  type CallToolRequest,
-} from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 
 // Mock the DeployHQClient to avoid making real API calls
 vi.mock('../api-client.js', () => {
@@ -26,8 +23,8 @@ vi.mock('../api-client.js', () => {
     getDeploymentLog = vi.fn().mockResolvedValue('');
     validateCredentials = vi.fn().mockResolvedValue(undefined);
 
-    constructor(config: any) {
-      // Mock constructor
+    constructor(_config: any) {
+      // Mock constructor - config param prefixed with _ to indicate intentionally unused
     }
   }
 
