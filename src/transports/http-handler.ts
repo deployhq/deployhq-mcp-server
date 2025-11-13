@@ -6,6 +6,7 @@
 import { Express } from 'express';
 import { DeployHQClient } from '../api-client.js';
 import { log } from '../utils/logger.js';
+import { ServerConfig } from '../config.js';
 import {
   tools,
   ListProjectsSchema,
@@ -19,7 +20,7 @@ import {
 /**
  * Setup HTTP transport routes for MCP protocol
  */
-export function setupHTTPRoutes(app: Express): void {
+export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
   // HTTP transport endpoint for MCP (JSON-RPC over HTTP)
   app.post('/mcp', async (req, res) => {
     log.info('New HTTP transport request');
@@ -131,6 +132,20 @@ export function setupHTTPRoutes(app: Express): void {
             }
 
             case 'create_deployment': {
+              // Check if server is in read-only mode
+              if (config.readOnlyMode) {
+                log.info('⚠️  Deployment creation blocked by read-only mode');
+                throw new Error(
+                  'FORBIDDEN: Server is running in read-only mode. ' +
+                  'Deployment creation is disabled for security.\n\n' +
+                  'To enable deployments:\n' +
+                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+                  '- Or use CLI flag: --read-only=false\n\n' +
+                  'Read-only mode is enabled by default to prevent ' +
+                  'accidental deployments when using AI assistants.'
+                );
+              }
+
               const validatedArgs = CreateDeploymentSchema.parse(args);
               const { project, ...deploymentParams } = validatedArgs;
               result = await client.createDeployment(project, deploymentParams);

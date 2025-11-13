@@ -9,6 +9,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { createMCPServer } from './mcp-server.js';
 import { DeployHQClient, AuthenticationError } from './api-client.js';
 import { log } from './utils/logger.js';
+import { parseServerConfig, getConfigSource } from './config.js';
 
 /**
  * Main stdio server entry point
@@ -27,8 +28,22 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
+    // Parse server configuration (read-only mode, etc.)
+    const config = parseServerConfig();
+    const configSource = getConfigSource();
+
     log.info('Starting DeployHQ MCP Server in stdio mode');
+    log.info(
+      `Read-only mode: ${config.readOnlyMode ? 'ENABLED' : 'DISABLED'} (${configSource})`
+    );
     log.debug(`Account: ${account}, Email: ${email}`);
+
+    if (config.readOnlyMode) {
+      log.info(
+        '⚠️  Server is running in read-only mode. Deployment creation is disabled.'
+      );
+      log.info('   To enable deployments, set DEPLOYHQ_READ_ONLY=false or use --read-only=false');
+    }
 
     // Validate credentials before starting server
     log.info('Validating credentials...');
@@ -52,8 +67,8 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Create MCP server with user credentials
-    const server = createMCPServer(email, apiKey, account);
+    // Create MCP server with user credentials and configuration
+    const server = createMCPServer(email, apiKey, account, config);
 
     // Create stdio transport
     const transport = new StdioServerTransport();

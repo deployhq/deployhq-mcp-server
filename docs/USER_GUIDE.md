@@ -583,6 +583,79 @@ Choose the scope that best fits your needs. For most users, `--scope user` or us
 
 ## 🔒 Security Best Practices
 
+### Read-Only Mode (Default)
+
+⚠️ **The DeployHQ MCP Server runs in read-only mode by default** to protect against accidental or malicious deployment creation when using AI assistants.
+
+**What this means:**
+- ✅ All read operations work normally (list projects, get deployments, view logs)
+- ❌ Deployment creation is blocked and returns a clear error message
+- 🛡️ Your production environments are protected by default
+
+**Disabling Read-Only Mode:**
+
+If you need to create deployments through the MCP server, you can disable read-only mode in two ways:
+
+**Method 1: Environment Variable**
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": ["-y", "deployhq-mcp-server"],
+      "env": {
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account",
+        "DEPLOYHQ_READ_ONLY": "false"
+      }
+    }
+  }
+}
+```
+
+**Method 2: CLI Flag**
+```json
+{
+  "mcpServers": {
+    "deployhq": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "deployhq-mcp-server",
+        "--read-only=false"
+      ],
+      "env": {
+        "DEPLOYHQ_EMAIL": "your-email@example.com",
+        "DEPLOYHQ_API_KEY": "your-api-key",
+        "DEPLOYHQ_ACCOUNT": "your-account"
+      }
+    }
+  }
+}
+```
+
+**Configuration Precedence:**
+1. CLI flag `--read-only` (highest priority)
+2. Environment variable `DEPLOYHQ_READ_ONLY`
+3. Default value: `true` (read-only enabled)
+
+**Accepted Values:**
+- Enable read-only: `"true"`, `"1"`, `"yes"` (case-insensitive)
+- Disable read-only: `"false"`, `"0"`, `"no"` (case-insensitive)
+
+**When to Disable Read-Only Mode:**
+- You explicitly want to enable AI-assisted deployments
+- You're using the MCP server in a development/staging environment
+- You have additional security controls in place
+
+**Security Warning:**
+- Deployment logs may contain environment variables, API keys, and secrets
+- Exercise extreme caution when using tools that retrieve logs
+- Consider using separate API keys for read-only vs. read-write operations
+
+### Additional Security Best Practices
+
 1. **Protect Your Credentials**:
    - Never share your API key
    - Credentials stay local (environment variables, never transmitted externally)

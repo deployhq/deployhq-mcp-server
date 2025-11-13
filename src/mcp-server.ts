@@ -10,6 +10,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { DeployHQClient } from './api-client.js';
 import { log } from './utils/logger.js';
+import { ServerConfig } from './config.js';
 import {
   tools,
   ListProjectsSchema,
@@ -27,7 +28,8 @@ import {
 export function createMCPServer(
   username: string,
   password: string,
-  account: string
+  account: string,
+  config: ServerConfig = { readOnlyMode: true }
 ): Server {
   // Create DeployHQ client with user credentials
   const client = new DeployHQClient({
@@ -119,6 +121,20 @@ export function createMCPServer(
         }
 
         case 'create_deployment': {
+          // Check if server is in read-only mode
+          if (config.readOnlyMode) {
+            log.info('⚠️  Deployment creation blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Deployment creation is disabled for security.\n\n' +
+              'To enable deployments:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode is enabled by default to prevent ' +
+              'accidental deployments when using AI assistants.'
+            );
+          }
+
           const validatedArgs = CreateDeploymentSchema.parse(args);
           const { project, ...deploymentParams } = validatedArgs;
           log.debug(`Creating deployment for project: ${project}`);
