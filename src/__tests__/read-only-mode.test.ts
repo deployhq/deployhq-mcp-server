@@ -91,12 +91,12 @@ describe('Read-Only Mode Integration', () => {
       expect(response.content[0].text).toContain('test-deployment-uuid');
     });
 
-    it('should use default read-only mode (enabled) when no config provided', async () => {
+    it('should use default read-only mode (disabled) when no config provided', async () => {
       const server = createMCPServer(
         'test@example.com',
         'api-key',
         'test-account'
-        // No config provided - should default to read-only
+        // No config provided - should default to deployments allowed
       );
 
       const response = await invokeToolForTest(server, 'create_deployment', {
@@ -106,9 +106,9 @@ describe('Read-Only Mode Integration', () => {
         end_revision: 'def456',
       });
 
-      // Should return an error response (read-only by default)
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('read-only mode');
+      // Should return a successful response (deployments allowed by default)
+      expect(response.isError).toBeUndefined();
+      expect(response.content[0].text).toContain('identifier');
     });
 
     it('should include helpful error message with configuration instructions', async () => {

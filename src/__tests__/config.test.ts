@@ -18,14 +18,14 @@ describe('Configuration Parsing', () => {
 
   describe('parseServerConfig', () => {
     describe('Default behavior', () => {
-      it('should default to read-only mode enabled', () => {
+      it('should default to read-only mode disabled (deployments allowed)', () => {
         // Clear any existing config
         delete process.env.DEPLOYHQ_READ_ONLY;
         process.argv = ['node', 'test.js'];
 
         const config = parseServerConfig();
 
-        expect(config.readOnlyMode).toBe(true);
+        expect(config.readOnlyMode).toBe(false);
       });
     });
 
@@ -129,13 +129,14 @@ describe('Configuration Parsing', () => {
         expect(config.readOnlyMode).toBe(false);
       });
 
-      it('should default to true for unrecognized values', () => {
+      it('should fall back to default for unrecognized values', () => {
         process.env.DEPLOYHQ_READ_ONLY = 'maybe';
         process.argv = ['node', 'test.js'];
 
         const config = parseServerConfig();
 
-        expect(config.readOnlyMode).toBe(true);
+        // Unrecognized values are ignored and we use the default (false)
+        expect(config.readOnlyMode).toBe(false);
       });
     });
 
@@ -274,7 +275,7 @@ describe('Configuration Parsing', () => {
 
         const config = parseServerConfig();
 
-        expect(config.readOnlyMode).toBe(true);
+        expect(config.readOnlyMode).toBe(false);
       });
     });
   });
@@ -333,7 +334,8 @@ describe('Configuration Parsing', () => {
 
       const config = parseServerConfig();
 
-      expect(config.readOnlyMode).toBe(true);
+      // Empty string is ignored and we use the default (false)
+      expect(config.readOnlyMode).toBe(false);
     });
 
     it('should handle multiple --read-only flags (last one wins)', () => {

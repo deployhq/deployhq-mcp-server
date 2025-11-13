@@ -6,7 +6,7 @@
 export interface ServerConfig {
   /**
    * Read-only mode: when enabled, write operations (like create_deployment) are blocked
-   * Default: true (read-only enabled by default for security)
+   * Default: false (deployments allowed by default)
    */
   readOnlyMode: boolean;
 }
@@ -68,7 +68,7 @@ function parseReadOnlyFlag(): boolean | undefined {
  * Precedence (highest to lowest):
  * 1. CLI flags (--read-only)
  * 2. Environment variables (DEPLOYHQ_READ_ONLY)
- * 3. Default values (read-only mode enabled by default)
+ * 3. Default values (deployments allowed by default)
  *
  * @returns ServerConfig object with parsed configuration
  */
@@ -86,8 +86,8 @@ export function parseServerConfig(): ServerConfig {
     return { readOnlyMode: envValue };
   }
 
-  // Default to read-only mode enabled (secure by default)
-  return { readOnlyMode: true };
+  // Default to read-only mode disabled (deployments allowed by default)
+  return { readOnlyMode: false };
 }
 
 /**

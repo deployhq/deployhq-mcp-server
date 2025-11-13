@@ -29,7 +29,7 @@ export function createMCPServer(
   username: string,
   password: string,
   account: string,
-  config: ServerConfig = { readOnlyMode: true }
+  config: ServerConfig = { readOnlyMode: false }
 ): Server {
   // Create DeployHQ client with user credentials
   const client = new DeployHQClient({
@@ -127,10 +127,10 @@ export function createMCPServer(
             throw new Error(
               'FORBIDDEN: Server is running in read-only mode. ' +
               'Deployment creation is disabled for security.\n\n' +
-              'To enable deployments:\n' +
+              'To disable read-only mode:\n' +
               '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
               '- Or use CLI flag: --read-only=false\n\n' +
-              'Read-only mode is enabled by default to prevent ' +
+              'Read-only mode can be enabled to prevent ' +
               'accidental deployments when using AI assistants.'
             );
           }
