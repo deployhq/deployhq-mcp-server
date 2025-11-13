@@ -4,7 +4,7 @@ import { parseServerConfig, getConfigSource } from '../config.js';
 describe('Configuration Parsing', () => {
   // Store original process.argv and env
   let originalArgv: string[];
-  let originalEnv: NodeJS.ProcessEnv;
+  let originalEnv: typeof process.env;
 
   beforeEach(() => {
     originalArgv = [...process.argv];

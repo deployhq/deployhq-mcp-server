@@ -3,6 +3,8 @@
  * Tests the enforcement of read-only mode when calling create_deployment
  */
 
+/* eslint-disable @typescript-eslint/no-explicit-any, no-unused-vars */
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createMCPServer } from '../mcp-server.js';
 import type { ServerConfig } from '../config.js';
@@ -23,7 +25,7 @@ vi.mock('../api-client.js', () => {
     getDeploymentLog = vi.fn().mockResolvedValue('');
     validateCredentials = vi.fn().mockResolvedValue(undefined);
 
-    constructor(_config: any) {
+    constructor(_config: { username: string; password: string; account: string }) {
       // Mock constructor - config param prefixed with _ to indicate intentionally unused
     }
   }
