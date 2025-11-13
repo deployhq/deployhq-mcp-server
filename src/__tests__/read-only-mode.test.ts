@@ -3,12 +3,9 @@
  * Tests the enforcement of read-only mode when calling create_deployment
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any, no-unused-vars */
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createMCPServer } from '../mcp-server.js';
+import { createMCPServer, invokeToolForTest } from '../mcp-server.js';
 import type { ServerConfig } from '../config.js';
-import type { CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 
 // Mock the DeployHQClient to avoid making real API calls
 vi.mock('../api-client.js', () => {
@@ -25,21 +22,14 @@ vi.mock('../api-client.js', () => {
     getDeploymentLog = vi.fn().mockResolvedValue('');
     validateCredentials = vi.fn().mockResolvedValue(undefined);
 
+    // eslint-disable-next-line no-unused-vars
     constructor(_config: { username: string; password: string; account: string }) {
       // Mock constructor - config param prefixed with _ to indicate intentionally unused
     }
   }
 
-  class MockAuthenticationError extends Error {
-    constructor(message: string) {
-      super(message);
-      this.name = 'AuthenticationError';
-    }
-  }
-
   return {
     DeployHQClient: MockDeployHQClient,
-    AuthenticationError: MockAuthenticationError,
   };
 });
 
@@ -65,26 +55,12 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'create_deployment',
-          arguments: {
-            project: 'test-project',
-            parent_identifier: 'server-uuid',
-            start_revision: 'abc123',
-            end_revision: 'def456',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      expect(handler).toBeDefined();
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'create_deployment', {
+        project: 'test-project',
+        parent_identifier: 'server-uuid',
+        start_revision: 'abc123',
+        end_revision: 'def456',
+      });
 
       // Should return an error response
       expect(response.isError).toBe(true);
@@ -102,26 +78,12 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'create_deployment',
-          arguments: {
-            project: 'test-project',
-            parent_identifier: 'server-uuid',
-            start_revision: 'abc123',
-            end_revision: 'def456',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      expect(handler).toBeDefined();
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'create_deployment', {
+        project: 'test-project',
+        parent_identifier: 'server-uuid',
+        start_revision: 'abc123',
+        end_revision: 'def456',
+      });
 
       // Should return a successful response
       expect(response.isError).toBeUndefined();
@@ -137,26 +99,12 @@ describe('Read-Only Mode Integration', () => {
         // No config provided - should default to read-only
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'create_deployment',
-          arguments: {
-            project: 'test-project',
-            parent_identifier: 'server-uuid',
-            start_revision: 'abc123',
-            end_revision: 'def456',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      expect(handler).toBeDefined();
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'create_deployment', {
+        project: 'test-project',
+        parent_identifier: 'server-uuid',
+        start_revision: 'abc123',
+        end_revision: 'def456',
+      });
 
       // Should return an error response (read-only by default)
       expect(response.isError).toBe(true);
@@ -172,24 +120,12 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'create_deployment',
-          arguments: {
-            project: 'test-project',
-            parent_identifier: 'server-uuid',
-            start_revision: 'abc123',
-            end_revision: 'def456',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'create_deployment', {
+        project: 'test-project',
+        parent_identifier: 'server-uuid',
+        start_revision: 'abc123',
+        end_revision: 'def456',
+      });
 
       const errorText = response.content[0].text;
 
@@ -213,19 +149,7 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'list_projects',
-          arguments: {},
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'list_projects', {});
 
       // Should work normally
       expect(response.isError).toBeUndefined();
@@ -240,21 +164,9 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'get_project',
-          arguments: {
-            permalink: 'test-project',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'get_project', {
+        permalink: 'test-project',
+      });
 
       // Should work normally
       expect(response.isError).toBeUndefined();
@@ -269,21 +181,9 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'list_servers',
-          arguments: {
-            project: 'test-project',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'list_servers', {
+        project: 'test-project',
+      });
 
       // Should work normally
       expect(response.isError).toBeUndefined();
@@ -298,21 +198,9 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'list_deployments',
-          arguments: {
-            project: 'test-project',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'list_deployments', {
+        project: 'test-project',
+      });
 
       // Should work normally
       expect(response.isError).toBeUndefined();
@@ -327,22 +215,10 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'get_deployment',
-          arguments: {
-            project: 'test-project',
-            uuid: 'deployment-uuid',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'get_deployment', {
+        project: 'test-project',
+        uuid: 'deployment-uuid',
+      });
 
       // Should work normally
       expect(response.isError).toBeUndefined();
@@ -357,22 +233,10 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'get_deployment_log',
-          arguments: {
-            project: 'test-project',
-            uuid: 'deployment-uuid',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'get_deployment_log', {
+        project: 'test-project',
+        uuid: 'deployment-uuid',
+      });
 
       // Should work normally
       expect(response.isError).toBeUndefined();
@@ -389,24 +253,12 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'create_deployment',
-          arguments: {
-            project: 'test-project',
-            parent_identifier: 'server-uuid',
-            start_revision: 'abc123',
-            end_revision: 'def456',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'create_deployment', {
+        project: 'test-project',
+        parent_identifier: 'server-uuid',
+        start_revision: 'abc123',
+        end_revision: 'def456',
+      });
 
       expect(response.isError).toBe(true);
       expect(response.content).toBeDefined();
@@ -429,24 +281,12 @@ describe('Read-Only Mode Integration', () => {
         config
       );
 
-      const request: CallToolRequest = {
-        method: 'tools/call',
-        params: {
-          name: 'create_deployment',
-          arguments: {
-            project: 'test-project',
-            parent_identifier: 'server-uuid',
-            start_revision: 'abc123',
-            end_revision: 'def456',
-          },
-        },
-      };
-
-      // Get the handler for CallToolRequest
-      const handlers = (server as any)._requestHandlers;
-      const handler = handlers.get('tools/call');
-
-      const response = await handler(request);
+      const response = await invokeToolForTest(server, 'create_deployment', {
+        project: 'test-project',
+        parent_identifier: 'server-uuid',
+        start_revision: 'abc123',
+        end_revision: 'def456',
+      });
 
       const errorData = JSON.parse(response.content[0].text);
 
