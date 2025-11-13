@@ -34,7 +34,7 @@ describe('MCP Server Factory', () => {
       expect(server1).not.toBe(server2);
     });
 
-    it('should create server with read-only mode enabled by default', () => {
+    it('should create server with read-only mode disabled by default', () => {
       const server = createMCPServer(
         'test@example.com',
         'api-key',
@@ -42,7 +42,7 @@ describe('MCP Server Factory', () => {
       );
 
       expect(server).toBeInstanceOf(Server);
-      // Server should be created with default config (read-only enabled)
+      // Server should be created with default config (read-only disabled, deployments allowed)
     });
 
     it('should create server with explicit read-only config', () => {
