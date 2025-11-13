@@ -249,10 +249,10 @@ Example:
 **Problem**: "Server is running in read-only mode" error when trying to create deployments
 
 **Solution**:
-- The server runs in read-only mode by default for security
-- To enable deployments, set `DEPLOYHQ_READ_ONLY=false` in your environment variables
+- Read-only mode is disabled by default, but you may have enabled it
+- To disable read-only mode, set `DEPLOYHQ_READ_ONLY=false` in your environment variables
 - Or use the `--read-only=false` CLI flag
-- See the [Security](#-security) section for detailed instructions
+- See the [Security](#-security) section for detailed instructions on read-only mode
 
 ### Deployment Fails
 
@@ -405,21 +405,22 @@ npm run test:ui       # Interactive UI for debugging
 
 ## 🔒 Security
 
-### Read-Only Mode (Default)
+### Read-Only Mode (Optional)
 
-⚠️ **The DeployHQ MCP Server runs in read-only mode by default** to protect against accidental or malicious deployment creation when using AI assistants.
+The DeployHQ MCP Server supports an optional **read-only mode** that can be enabled to prevent deployment creation when using AI assistants.
 
-**What this means:**
-- ✅ All read operations work normally (list projects, get deployments, view logs)
-- ❌ Deployment creation is blocked and returns a clear error message
-- 🛡️ Your production environments are protected by default
+**Default Behavior:**
+- ✅ All operations work by default (list, get, create)
+- ✅ Deployments can be created through AI assistants
+- ⚠️ Consider enabling read-only mode in production environments
 
-**When to disable read-only mode:**
-- You explicitly want to enable AI-assisted deployments
-- You're using the MCP server in a development/staging environment
-- You have additional security controls in place
+**When to enable read-only mode:**
+- You want to prevent accidental deployments via AI
+- You're connecting to production environments
+- You want an extra layer of protection
+- You only need read access to monitor deployments
 
-**How to disable read-only mode:**
+**How to enable read-only mode:**
 
 Via environment variable:
 ```json
@@ -432,7 +433,7 @@ Via environment variable:
         "DEPLOYHQ_EMAIL": "your-email@example.com",
         "DEPLOYHQ_API_KEY": "your-api-key",
         "DEPLOYHQ_ACCOUNT": "your-account",
-        "DEPLOYHQ_READ_ONLY": "false"
+        "DEPLOYHQ_READ_ONLY": "true"
       }
     }
   }
@@ -448,7 +449,7 @@ Via CLI flag:
       "args": [
         "-y",
         "deployhq-mcp-server",
-        "--read-only=false"
+        "--read-only"
       ],
       "env": {
         "DEPLOYHQ_EMAIL": "your-email@example.com",
@@ -463,7 +464,7 @@ Via CLI flag:
 **Configuration precedence:**
 1. CLI flag `--read-only` (highest priority)
 2. Environment variable `DEPLOYHQ_READ_ONLY`
-3. Default value: `true` (read-only enabled)
+3. Default value: `false` (deployments allowed)
 
 ### Additional Security Notes
 
