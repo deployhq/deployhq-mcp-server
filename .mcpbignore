@@ -1,0 +1,38 @@
+# Credentials
+.mcpregistry_*
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+
+# Source (dist/ is sufficient)
+src/
+
+# Test files
+dist/__tests__/
+*.test.js
+*.test.ts
+vitest.config.ts
+
+# Dev files
+.github/
+.git/
+CLAUDE.md
+RELEASING.md
+tsconfig.json
+eslint.config.js
+
+# Extra logos (icon is in manifest)
+deployhq-icon-400.png
+deployhq-logo.png
+deployhq-logo.svg
+deployhq-icon-512.svg
+
+# Dev dependencies
+node_modules/.package-lock.json
+
+# Server.json (registry metadata, not needed in bundle)
+server.json
+test-stdio.sh
