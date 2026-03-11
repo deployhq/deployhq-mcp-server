@@ -109,7 +109,7 @@ Then restart Claude Desktop.
 
 **For Claude Code:**
 
-Add to your `.claude.json` file in your project directory.
+Add to your `.claude.json` file in your project directory, then exit and restart your Claude session (type `exit` or Ctrl+D, then run `claude`).
 
 **Configuration:**
 
@@ -311,7 +311,7 @@ Example:
 ## 📦 Prerequisites
 
 - **Node.js 18+** (Node 20+ recommended)
-- DeployHQ account with API access
+- **DeployHQ account with API access** (API is **not available** for Solo and Free plans)
 
 **Note**: The server uses `node-fetch` for HTTP requests. Node 18+ is required for development tools (ESLint, Vitest).
 
@@ -671,6 +671,12 @@ Contributions are welcome! Please:
 ### For Maintainers
 
 See [RELEASING.md](RELEASING.md) for instructions on creating releases and publishing to npm.
+
+## Privacy Policy
+
+This MCP server does not collect, store, or transmit any user data beyond what is necessary to communicate with the DeployHQ API. Credentials are passed via environment variables and are never logged or persisted.
+
+For DeployHQ's full privacy policy, see: https://www.deployhq.com/privacy
 
 ## 📄 License
 

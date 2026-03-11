@@ -55,6 +55,10 @@ export const tools = [
     name: 'list_projects',
     description:
       'List all projects in the DeployHQ account. Returns project names, permalinks, repository information, and deployment status.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {},
@@ -64,6 +68,10 @@ export const tools = [
     name: 'get_project',
     description:
       'Get detailed information about a specific project including repository details, SSH keys, and deployment URLs.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -79,6 +87,10 @@ export const tools = [
     name: 'list_servers',
     description:
       'List all servers configured for a project. Returns server names, hostnames, protocols, paths, and deployment settings.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -94,6 +106,10 @@ export const tools = [
     name: 'list_deployments',
     description:
       'List deployments for a project with pagination support. Returns deployment status, timestamps, revisions, and server information. Can be filtered by server UUID.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -117,6 +133,10 @@ export const tools = [
     name: 'get_deployment',
     description:
       'Get detailed information about a specific deployment including its status, logs, files changed, and server details.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -136,6 +156,10 @@ export const tools = [
     name: 'get_deployment_log',
     description:
       'Get the deployment log for a specific deployment. Returns the complete log output as text, useful for debugging failed or completed deployments.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
     inputSchema: {
       type: 'object',
       properties: {
@@ -155,6 +179,10 @@ export const tools = [
     name: 'create_deployment',
     description:
       'Create a new deployment for a project. Can queue for immediate deployment or create a preview. Requires server UUID and commit revisions.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+    },
     inputSchema: {
       type: 'object',
       properties: {

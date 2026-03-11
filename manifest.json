@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.3",
+  "name": "deployhq-mcp-server",
+  "display_name": "DeployHQ",
+  "description": "DeployHQ MCP server for managing deployment projects, servers, and deployments via AI assistants.",
+  "homepage": "https://github.com/deployhq/deployhq-mcp-server",
+  "privacy_policies": [
+    "https://www.deployhq.com/privacy"
+  ],
+  "support": {
+    "email": "support@deployhq.com",
+    "url": "https://github.com/deployhq/deployhq-mcp-server/issues"
+  }
+}
