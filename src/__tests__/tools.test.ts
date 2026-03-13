@@ -263,6 +263,10 @@ describe('Tool Schemas', () => {
       expect(toolNames).toContain('get_deployment_log');
       expect(toolNames).toContain('create_deployment');
       expect(toolNames).toContain('list_ssh_keys');
+      expect(toolNames).toContain('list_global_environment_variables');
+      expect(toolNames).toContain('create_global_environment_variable');
+      expect(toolNames).toContain('update_global_environment_variable');
+      expect(toolNames).toContain('delete_global_environment_variable');
     });
 
     it('should have descriptions for all tools', () => {

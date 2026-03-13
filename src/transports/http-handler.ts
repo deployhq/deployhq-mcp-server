@@ -175,7 +175,16 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
 
             case 'create_global_environment_variable': {
               if (config.readOnlyMode) {
-                throw new Error('FORBIDDEN: Server is running in read-only mode.');
+                log.info('⚠️  Global environment variable creation blocked by read-only mode');
+                throw new Error(
+                  'FORBIDDEN: Server is running in read-only mode. ' +
+                  'Global environment variable creation is disabled for security.\n\n' +
+                  'To enable mutations:\n' +
+                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+                  '- Or use CLI flag: --read-only=false\n\n' +
+                  'Read-only mode is enabled by default to prevent ' +
+                  'accidental changes when using AI assistants.'
+                );
               }
               const validatedArgs = CreateGlobalEnvironmentVariableSchema.parse(args);
               result = await client.createGlobalEnvironmentVariable(validatedArgs);
@@ -184,7 +193,16 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
 
             case 'update_global_environment_variable': {
               if (config.readOnlyMode) {
-                throw new Error('FORBIDDEN: Server is running in read-only mode.');
+                log.info('⚠️  Global environment variable update blocked by read-only mode');
+                throw new Error(
+                  'FORBIDDEN: Server is running in read-only mode. ' +
+                  'Global environment variable updates are disabled for security.\n\n' +
+                  'To enable mutations:\n' +
+                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+                  '- Or use CLI flag: --read-only=false\n\n' +
+                  'Read-only mode is enabled by default to prevent ' +
+                  'accidental changes when using AI assistants.'
+                );
               }
               const validatedArgs = UpdateGlobalEnvironmentVariableSchema.parse(args);
               const { id, ...updateParams } = validatedArgs;
@@ -194,7 +212,16 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
 
             case 'delete_global_environment_variable': {
               if (config.readOnlyMode) {
-                throw new Error('FORBIDDEN: Server is running in read-only mode.');
+                log.info('⚠️  Global environment variable deletion blocked by read-only mode');
+                throw new Error(
+                  'FORBIDDEN: Server is running in read-only mode. ' +
+                  'Global environment variable deletion is disabled for security.\n\n' +
+                  'To enable mutations:\n' +
+                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+                  '- Or use CLI flag: --read-only=false\n\n' +
+                  'Read-only mode is enabled by default to prevent ' +
+                  'accidental changes when using AI assistants.'
+                );
               }
               const validatedArgs = DeleteGlobalEnvironmentVariableSchema.parse(args);
               result = await client.deleteGlobalEnvironmentVariable(validatedArgs.id);

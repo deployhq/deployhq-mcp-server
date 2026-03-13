@@ -57,7 +57,7 @@ export const CreateGlobalEnvironmentVariableSchema = z.object({
 });
 
 export const UpdateGlobalEnvironmentVariableSchema = z.object({
-  id: z.string().describe('Environment variable identifier'),
+  id: z.coerce.string().describe('Environment variable identifier'),
   name: z.string().optional().describe('Environment variable name'),
   value: z.string().optional().describe('Environment variable value'),
   locked: z.boolean().optional().describe('Whether the variable is locked'),
@@ -65,7 +65,7 @@ export const UpdateGlobalEnvironmentVariableSchema = z.object({
 });
 
 export const DeleteGlobalEnvironmentVariableSchema = z.object({
-  id: z.string().describe('Environment variable identifier'),
+  id: z.coerce.string().describe('Environment variable identifier'),
 });
 
 export const ListSshKeysSchema = z.object({});
