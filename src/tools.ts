@@ -47,6 +47,29 @@ export const CreateDeploymentSchema = z.object({
   use_latest: z.string().optional().describe('Set to "1" to use the latest deployed commit as start_revision'),
 });
 
+export const ListGlobalEnvironmentVariablesSchema = z.object({});
+
+export const CreateGlobalEnvironmentVariableSchema = z.object({
+  name: z.string().describe('Environment variable name'),
+  value: z.string().describe('Environment variable value'),
+  locked: z.boolean().optional().describe('Whether the variable is locked (read-only after creation)'),
+  build_pipeline: z.boolean().optional().describe('Whether the variable is available in the build pipeline'),
+});
+
+export const UpdateGlobalEnvironmentVariableSchema = z.object({
+  id: z.string().describe('Environment variable identifier'),
+  name: z.string().optional().describe('Environment variable name'),
+  value: z.string().optional().describe('Environment variable value'),
+  locked: z.boolean().optional().describe('Whether the variable is locked'),
+  build_pipeline: z.boolean().optional().describe('Whether the variable is available in the build pipeline'),
+});
+
+export const DeleteGlobalEnvironmentVariableSchema = z.object({
+  id: z.string().describe('Environment variable identifier'),
+});
+
+export const ListSshKeysSchema = z.object({});
+
 /**
  * Tool definitions for MCP server
  */
@@ -201,6 +224,117 @@ export const tools = [
         },
       },
       required: ['project', 'parent_identifier', 'start_revision', 'end_revision'],
+    },
+  },
+  {
+    name: 'list_global_environment_variables',
+    description:
+      'List all global (account-level) environment variables. These variables are available across all projects in the account. Returns variable names, masked values, and settings.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'create_global_environment_variable',
+    description:
+      'Create a new global (account-level) environment variable. The variable will be available across all projects in the account.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Environment variable name',
+        },
+        value: {
+          type: 'string',
+          description: 'Environment variable value',
+        },
+        locked: {
+          type: 'boolean',
+          description: 'Whether the variable is locked (read-only after creation) (optional)',
+        },
+        build_pipeline: {
+          type: 'boolean',
+          description: 'Whether the variable is available in the build pipeline (optional)',
+        },
+      },
+      required: ['name', 'value'],
+    },
+  },
+  {
+    name: 'update_global_environment_variable',
+    description:
+      'Update an existing global (account-level) environment variable. Can change the name, value, locked status, or build pipeline availability.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Environment variable identifier',
+        },
+        name: {
+          type: 'string',
+          description: 'Environment variable name (optional)',
+        },
+        value: {
+          type: 'string',
+          description: 'Environment variable value (optional)',
+        },
+        locked: {
+          type: 'boolean',
+          description: 'Whether the variable is locked (optional)',
+        },
+        build_pipeline: {
+          type: 'boolean',
+          description: 'Whether the variable is available in the build pipeline (optional)',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'delete_global_environment_variable',
+    description:
+      'Delete a global (account-level) environment variable. This action is irreversible.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Environment variable identifier',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'list_ssh_keys',
+    description:
+      'List all SSH public keys for the account. Returns public keys, fingerprints, titles, and key types. Use these keys to authorize DeployHQ on servers for SSH-based deployments. Never returns private keys.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {},
     },
   },
 ] as const;

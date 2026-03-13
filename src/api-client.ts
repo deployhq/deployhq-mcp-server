@@ -114,6 +114,39 @@ export interface CreateDeploymentParams {
   use_latest?: string;
 }
 
+export interface EnvironmentVariable {
+  identifier: number;
+  name: string;
+  masked_value: string;
+  locked: boolean;
+  build_pipeline: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateGlobalEnvironmentVariableParams {
+  name: string;
+  value: string;
+  locked?: boolean;
+  build_pipeline?: boolean;
+}
+
+export interface SshKey {
+  identifier: string;
+  title: string;
+  public_key: string;
+  key_type: string;
+  fingerprint: string;
+  account: boolean;
+}
+
+export interface UpdateGlobalEnvironmentVariableParams {
+  name?: string;
+  value?: string;
+  locked?: boolean;
+  build_pipeline?: boolean;
+}
+
 /**
  * Configuration for DeployHQ API client
  */
@@ -351,6 +384,63 @@ export class DeployHQClient {
         error
       );
     }
+  }
+
+  /**
+   * Lists all SSH public keys for the account
+   * @returns Array of SSH keys (public keys only)
+   */
+  async listSshKeys(): Promise<SshKey[]> {
+    return this.request<SshKey[]>('/ssh_keys');
+  }
+
+  /**
+   * Lists all global environment variables for the account
+   * @returns Array of environment variables
+   */
+  async listGlobalEnvironmentVariables(): Promise<EnvironmentVariable[]> {
+    return this.request<EnvironmentVariable[]>('/global_environment_variables');
+  }
+
+  /**
+   * Creates a new global environment variable
+   * @param params - Environment variable parameters
+   * @returns Created environment variable
+   */
+  async createGlobalEnvironmentVariable(
+    params: CreateGlobalEnvironmentVariableParams
+  ): Promise<EnvironmentVariable> {
+    return this.request<EnvironmentVariable>('/global_environment_variables', {
+      method: 'POST',
+      body: JSON.stringify({ environment_variable: params }),
+    });
+  }
+
+  /**
+   * Updates an existing global environment variable
+   * @param id - Environment variable identifier
+   * @param params - Environment variable parameters to update
+   * @returns Updated environment variable
+   */
+  async updateGlobalEnvironmentVariable(
+    id: string,
+    params: UpdateGlobalEnvironmentVariableParams
+  ): Promise<EnvironmentVariable> {
+    return this.request<EnvironmentVariable>(`/global_environment_variables/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ environment_variable: params }),
+    });
+  }
+
+  /**
+   * Deletes a global environment variable
+   * @param id - Environment variable identifier
+   * @returns Deletion status response
+   */
+  async deleteGlobalEnvironmentVariable(id: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/global_environment_variables/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   /**

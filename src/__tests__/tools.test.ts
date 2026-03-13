@@ -7,6 +7,7 @@ import {
   GetDeploymentSchema,
   GetDeploymentLogSchema,
   CreateDeploymentSchema,
+  ListSshKeysSchema,
   tools,
 } from '../tools.js';
 
@@ -235,9 +236,21 @@ describe('Tool Schemas', () => {
     });
   });
 
+  describe('ListSshKeysSchema', () => {
+    it('should validate empty object', () => {
+      const result = ListSshKeysSchema.safeParse({});
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept any additional properties', () => {
+      const result = ListSshKeysSchema.safeParse({ foo: 'bar' });
+      expect(result.success).toBe(true);
+    });
+  });
+
   describe('Tools Array', () => {
-    it('should export 7 tools', () => {
-      expect(tools).toHaveLength(7);
+    it('should export 12 tools', () => {
+      expect(tools).toHaveLength(12);
     });
 
     it('should have correct tool names', () => {
@@ -249,6 +262,7 @@ describe('Tool Schemas', () => {
       expect(toolNames).toContain('get_deployment');
       expect(toolNames).toContain('get_deployment_log');
       expect(toolNames).toContain('create_deployment');
+      expect(toolNames).toContain('list_ssh_keys');
     });
 
     it('should have descriptions for all tools', () => {

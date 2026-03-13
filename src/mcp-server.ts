@@ -20,6 +20,11 @@ import {
   GetDeploymentSchema,
   GetDeploymentLogSchema,
   CreateDeploymentSchema,
+  ListSshKeysSchema,
+  ListGlobalEnvironmentVariablesSchema,
+  CreateGlobalEnvironmentVariableSchema,
+  UpdateGlobalEnvironmentVariableSchema,
+  DeleteGlobalEnvironmentVariableSchema,
 } from './tools.js';
 
 /**
@@ -140,6 +145,86 @@ export function createMCPServer(
           log.debug(`Creating deployment for project: ${project}`);
           result = await client.createDeployment(project, deploymentParams);
           log.debug('Deployment created');
+          break;
+        }
+
+        case 'list_ssh_keys': {
+          ListSshKeysSchema.parse(args);
+          log.debug('Fetching SSH keys from API...');
+          result = await client.listSshKeys();
+          log.debug(`Got ${Array.isArray(result) ? result.length : '?'} SSH keys`);
+          break;
+        }
+
+        case 'list_global_environment_variables': {
+          ListGlobalEnvironmentVariablesSchema.parse(args);
+          log.debug('Fetching global environment variables from API...');
+          result = await client.listGlobalEnvironmentVariables();
+          log.debug(`Got ${Array.isArray(result) ? result.length : '?'} global environment variables`);
+          break;
+        }
+
+        case 'create_global_environment_variable': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global environment variable creation blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Global environment variable creation is disabled for security.\n\n' +
+              'To disable read-only mode:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode can be enabled to prevent ' +
+              'accidental changes when using AI assistants.'
+            );
+          }
+
+          const validatedArgs = CreateGlobalEnvironmentVariableSchema.parse(args);
+          log.debug(`Creating global environment variable: ${validatedArgs.name}`);
+          result = await client.createGlobalEnvironmentVariable(validatedArgs);
+          log.debug('Global environment variable created');
+          break;
+        }
+
+        case 'update_global_environment_variable': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global environment variable update blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Global environment variable update is disabled for security.\n\n' +
+              'To disable read-only mode:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode can be enabled to prevent ' +
+              'accidental changes when using AI assistants.'
+            );
+          }
+
+          const validatedArgs = UpdateGlobalEnvironmentVariableSchema.parse(args);
+          const { id, ...updateParams } = validatedArgs;
+          log.debug(`Updating global environment variable: ${id}`);
+          result = await client.updateGlobalEnvironmentVariable(id, updateParams);
+          log.debug('Global environment variable updated');
+          break;
+        }
+
+        case 'delete_global_environment_variable': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global environment variable deletion blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Global environment variable deletion is disabled for security.\n\n' +
+              'To disable read-only mode:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode can be enabled to prevent ' +
+              'accidental changes when using AI assistants.'
+            );
+          }
+
+          const validatedArgs = DeleteGlobalEnvironmentVariableSchema.parse(args);
+          log.debug(`Deleting global environment variable: ${validatedArgs.id}`);
+          result = await client.deleteGlobalEnvironmentVariable(validatedArgs.id);
+          log.debug('Global environment variable deleted');
           break;
         }
 

@@ -14,7 +14,13 @@ import {
   ListServersSchema,
   ListDeploymentsSchema,
   GetDeploymentSchema,
+  GetDeploymentLogSchema,
   CreateDeploymentSchema,
+  ListSshKeysSchema,
+  ListGlobalEnvironmentVariablesSchema,
+  CreateGlobalEnvironmentVariableSchema,
+  UpdateGlobalEnvironmentVariableSchema,
+  DeleteGlobalEnvironmentVariableSchema,
 } from '../tools.js';
 
 /**
@@ -132,7 +138,6 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
             }
 
             case 'create_deployment': {
-              // Check if server is in read-only mode
               if (config.readOnlyMode) {
                 log.info('⚠️  Deployment creation blocked by read-only mode');
                 throw new Error(
@@ -149,6 +154,50 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
               const validatedArgs = CreateDeploymentSchema.parse(args);
               const { project, ...deploymentParams } = validatedArgs;
               result = await client.createDeployment(project, deploymentParams);
+              break;
+            }
+
+            case 'get_deployment_log': {
+              const validatedArgs = GetDeploymentLogSchema.parse(args);
+              result = await client.getDeploymentLog(validatedArgs.project, validatedArgs.uuid);
+              break;
+            }
+
+            case 'list_ssh_keys':
+              ListSshKeysSchema.parse(args);
+              result = await client.listSshKeys();
+              break;
+
+            case 'list_global_environment_variables':
+              ListGlobalEnvironmentVariablesSchema.parse(args);
+              result = await client.listGlobalEnvironmentVariables();
+              break;
+
+            case 'create_global_environment_variable': {
+              if (config.readOnlyMode) {
+                throw new Error('FORBIDDEN: Server is running in read-only mode.');
+              }
+              const validatedArgs = CreateGlobalEnvironmentVariableSchema.parse(args);
+              result = await client.createGlobalEnvironmentVariable(validatedArgs);
+              break;
+            }
+
+            case 'update_global_environment_variable': {
+              if (config.readOnlyMode) {
+                throw new Error('FORBIDDEN: Server is running in read-only mode.');
+              }
+              const validatedArgs = UpdateGlobalEnvironmentVariableSchema.parse(args);
+              const { id, ...updateParams } = validatedArgs;
+              result = await client.updateGlobalEnvironmentVariable(id, updateParams);
+              break;
+            }
+
+            case 'delete_global_environment_variable': {
+              if (config.readOnlyMode) {
+                throw new Error('FORBIDDEN: Server is running in read-only mode.');
+              }
+              const validatedArgs = DeleteGlobalEnvironmentVariableSchema.parse(args);
+              result = await client.deleteGlobalEnvironmentVariable(validatedArgs.id);
               break;
             }
 
