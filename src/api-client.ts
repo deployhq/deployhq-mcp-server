@@ -140,6 +140,31 @@ export interface SshKey {
   account: boolean;
 }
 
+export interface ConfigFile {
+  identifier: string;
+  description: string;
+  path: string;
+  body: string;
+  build: boolean;
+  language: string;
+}
+
+export interface CreateGlobalConfigFileParams {
+  path: string;
+  body: string;
+  language?: string;
+  description?: string;
+  build?: boolean;
+}
+
+export interface UpdateGlobalConfigFileParams {
+  path?: string;
+  body?: string;
+  language?: string;
+  description?: string;
+  build?: boolean;
+}
+
 export interface UpdateGlobalEnvironmentVariableParams {
   name?: string;
   value?: string;
@@ -155,6 +180,7 @@ export interface DeployHQClientConfig {
   password: string;
   account: string;
   timeout?: number;
+  baseUrl?: string;
 }
 
 /**
@@ -175,7 +201,7 @@ export class DeployHQClient {
       throw new Error('Missing required configuration: username, password, or account');
     }
 
-    this.baseUrl = `https://${config.account}.deployhq.com`;
+    this.baseUrl = config.baseUrl || `https://${config.account}.deployhq.com`;
     this.timeout = config.timeout || 30000;
 
     // Create Basic Auth header
@@ -439,6 +465,64 @@ export class DeployHQClient {
    */
   async deleteGlobalEnvironmentVariable(id: string): Promise<{ status: string }> {
     return this.request<{ status: string }>(`/global_environment_variables/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Lists all global config file templates for the account
+   * @returns Array of config files
+   */
+  async listGlobalConfigFiles(): Promise<ConfigFile[]> {
+    return this.request<ConfigFile[]>('/global_config_files');
+  }
+
+  /**
+   * Gets a specific global config file template
+   * @param id - Config file identifier (UUID)
+   * @returns Config file details including body
+   */
+  async getGlobalConfigFile(id: string): Promise<ConfigFile> {
+    return this.request<ConfigFile>(`/global_config_files/${id}`);
+  }
+
+  /**
+   * Creates a new global config file template
+   * @param params - Config file parameters
+   * @returns Created config file
+   */
+  async createGlobalConfigFile(
+    params: CreateGlobalConfigFileParams
+  ): Promise<ConfigFile> {
+    return this.request<ConfigFile>('/global_config_files', {
+      method: 'POST',
+      body: JSON.stringify({ config_file: params }),
+    });
+  }
+
+  /**
+   * Updates an existing global config file template
+   * @param id - Config file identifier (UUID)
+   * @param params - Config file parameters to update
+   * @returns Updated config file
+   */
+  async updateGlobalConfigFile(
+    id: string,
+    params: UpdateGlobalConfigFileParams
+  ): Promise<ConfigFile> {
+    return this.request<ConfigFile>(`/global_config_files/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ config_file: params }),
+    });
+  }
+
+  /**
+   * Deletes a global config file template
+   * @param id - Config file identifier (UUID)
+   * @returns Deletion status response
+   */
+  async deleteGlobalConfigFile(id: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/global_config_files/${id}`, {
       method: 'DELETE',
     });
   }

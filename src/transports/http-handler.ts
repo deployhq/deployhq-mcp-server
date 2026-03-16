@@ -21,6 +21,11 @@ import {
   CreateGlobalEnvironmentVariableSchema,
   UpdateGlobalEnvironmentVariableSchema,
   DeleteGlobalEnvironmentVariableSchema,
+  ListGlobalConfigFilesSchema,
+  GetGlobalConfigFileSchema,
+  CreateGlobalConfigFileSchema,
+  UpdateGlobalConfigFileSchema,
+  DeleteGlobalConfigFileSchema,
 } from '../tools.js';
 
 /**
@@ -225,6 +230,72 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
               }
               const validatedArgs = DeleteGlobalEnvironmentVariableSchema.parse(args);
               result = await client.deleteGlobalEnvironmentVariable(validatedArgs.id);
+              break;
+            }
+
+            case 'list_global_config_files':
+              ListGlobalConfigFilesSchema.parse(args);
+              result = await client.listGlobalConfigFiles();
+              break;
+
+            case 'get_global_config_file': {
+              const validatedArgs = GetGlobalConfigFileSchema.parse(args);
+              result = await client.getGlobalConfigFile(validatedArgs.id);
+              break;
+            }
+
+            case 'create_global_config_file': {
+              if (config.readOnlyMode) {
+                log.info('⚠️  Global config file creation blocked by read-only mode');
+                throw new Error(
+                  'FORBIDDEN: Server is running in read-only mode. ' +
+                  'Global config file creation is disabled for security.\n\n' +
+                  'To enable mutations:\n' +
+                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+                  '- Or use CLI flag: --read-only=false\n\n' +
+                  'Read-only mode is enabled by default to prevent ' +
+                  'accidental changes when using AI assistants.'
+                );
+              }
+              const validatedArgs = CreateGlobalConfigFileSchema.parse(args);
+              result = await client.createGlobalConfigFile(validatedArgs);
+              break;
+            }
+
+            case 'update_global_config_file': {
+              if (config.readOnlyMode) {
+                log.info('⚠️  Global config file update blocked by read-only mode');
+                throw new Error(
+                  'FORBIDDEN: Server is running in read-only mode. ' +
+                  'Global config file updates are disabled for security.\n\n' +
+                  'To enable mutations:\n' +
+                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+                  '- Or use CLI flag: --read-only=false\n\n' +
+                  'Read-only mode is enabled by default to prevent ' +
+                  'accidental changes when using AI assistants.'
+                );
+              }
+              const validatedArgs = UpdateGlobalConfigFileSchema.parse(args);
+              const { id, ...updateParams } = validatedArgs;
+              result = await client.updateGlobalConfigFile(id, updateParams);
+              break;
+            }
+
+            case 'delete_global_config_file': {
+              if (config.readOnlyMode) {
+                log.info('⚠️  Global config file deletion blocked by read-only mode');
+                throw new Error(
+                  'FORBIDDEN: Server is running in read-only mode. ' +
+                  'Global config file deletion is disabled for security.\n\n' +
+                  'To enable mutations:\n' +
+                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+                  '- Or use CLI flag: --read-only=false\n\n' +
+                  'Read-only mode is enabled by default to prevent ' +
+                  'accidental changes when using AI assistants.'
+                );
+              }
+              const validatedArgs = DeleteGlobalConfigFileSchema.parse(args);
+              result = await client.deleteGlobalConfigFile(validatedArgs.id);
               break;
             }
 

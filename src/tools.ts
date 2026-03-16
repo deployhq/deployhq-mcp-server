@@ -38,13 +38,13 @@ export const CreateDeploymentSchema = z.object({
   project: z.string().describe('Project permalink'),
   parent_identifier: z.string().describe('Server or server group UUID'),
   start_revision: z.string().describe('Start commit hash or revision'),
-  end_revision: z.string().describe('End commit hash or revision'),
+  end_revision: z.string().describe('End commit SHA hash, or "latest"/"HEAD"/branch name to deploy the latest commit on the branch'),
   branch: z.string().optional().describe('Branch to deploy from'),
   mode: z.enum(['queue', 'preview']).optional().describe('Deployment mode: queue to deploy immediately, preview to preview changes'),
   copy_config_files: z.boolean().optional().describe('Whether to copy config files'),
   run_build_commands: z.boolean().optional().describe('Whether to run build commands'),
   use_build_cache: z.boolean().optional().describe('Whether to use build cache'),
-  use_latest: z.string().optional().describe('Set to "1" to use the latest deployed commit as start_revision'),
+  use_latest: z.string().optional().describe('Set to "1" to use the last successfully deployed commit as start_revision (start_revision will be translated to the ___PREVIOUS___ constant)'),
 });
 
 export const ListGlobalEnvironmentVariablesSchema = z.object({});
@@ -66,6 +66,33 @@ export const UpdateGlobalEnvironmentVariableSchema = z.object({
 
 export const DeleteGlobalEnvironmentVariableSchema = z.object({
   id: z.coerce.string().describe('Environment variable identifier'),
+});
+
+export const ListGlobalConfigFilesSchema = z.object({});
+
+export const GetGlobalConfigFileSchema = z.object({
+  id: z.string().describe('Config file identifier (UUID)'),
+});
+
+export const CreateGlobalConfigFileSchema = z.object({
+  path: z.string().describe('File path for the config file'),
+  body: z.string().describe('File contents'),
+  language: z.string().optional().describe('File language (e.g. yaml, json)'),
+  description: z.string().optional().describe('Description of the config file'),
+  build: z.boolean().optional().describe('Whether the config file is used during builds'),
+});
+
+export const UpdateGlobalConfigFileSchema = z.object({
+  id: z.string().describe('Config file identifier (UUID)'),
+  path: z.string().optional().describe('File path for the config file'),
+  body: z.string().optional().describe('File contents'),
+  language: z.string().optional().describe('File language (e.g. yaml, json)'),
+  description: z.string().optional().describe('Description of the config file'),
+  build: z.boolean().optional().describe('Whether the config file is used during builds'),
+});
+
+export const DeleteGlobalConfigFileSchema = z.object({
+  id: z.string().describe('Config file identifier (UUID)'),
 });
 
 export const ListSshKeysSchema = z.object({});
@@ -195,7 +222,7 @@ export const tools = [
         },
         end_revision: {
           type: 'string',
-          description: 'Ending commit hash or revision (usually HEAD or latest)',
+          description: 'Ending commit SHA hash, or "latest"/"HEAD"/branch name to deploy the latest commit on the branch (automatically resolved)',
         },
         branch: {
           type: 'string',
@@ -220,7 +247,7 @@ export const tools = [
         },
         use_latest: {
           type: 'string',
-          description: 'Set to "1" to use the last deployed commit as start_revision (optional)',
+          description: 'Set to "1" to use the last successfully deployed commit as start_revision (optional)',
         },
       },
       required: ['project', 'parent_identifier', 'start_revision', 'end_revision'],
@@ -319,6 +346,131 @@ export const tools = [
         id: {
           type: 'string',
           description: 'Environment variable identifier',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'list_global_config_files',
+    description:
+      'List all global (account-level) config file templates. These config files are available across all projects in the account. Returns file paths, descriptions, and settings.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'get_global_config_file',
+    description:
+      'Get a specific global (account-level) config file template including its body/contents. Use this to read the full content of a config file.',
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Config file identifier (UUID)',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'create_global_config_file',
+    description:
+      'Create a new global (account-level) config file template. The config file will be available across all projects in the account.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: {
+          type: 'string',
+          description: 'File path for the config file',
+        },
+        body: {
+          type: 'string',
+          description: 'File contents',
+        },
+        language: {
+          type: 'string',
+          description: 'File language (e.g. yaml, json) (optional)',
+        },
+        description: {
+          type: 'string',
+          description: 'Description of the config file (optional)',
+        },
+        build: {
+          type: 'boolean',
+          description: 'Whether the config file is used during builds (optional)',
+        },
+      },
+      required: ['path', 'body'],
+    },
+  },
+  {
+    name: 'update_global_config_file',
+    description:
+      'Update an existing global (account-level) config file template. Can change the path, body, language, description, or build setting.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Config file identifier (UUID)',
+        },
+        path: {
+          type: 'string',
+          description: 'File path for the config file (optional)',
+        },
+        body: {
+          type: 'string',
+          description: 'File contents (optional)',
+        },
+        language: {
+          type: 'string',
+          description: 'File language (e.g. yaml, json) (optional)',
+        },
+        description: {
+          type: 'string',
+          description: 'Description of the config file (optional)',
+        },
+        build: {
+          type: 'boolean',
+          description: 'Whether the config file is used during builds (optional)',
+        },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'delete_global_config_file',
+    description:
+      'Delete a global (account-level) config file template. This action is irreversible.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'Config file identifier (UUID)',
         },
       },
       required: ['id'],

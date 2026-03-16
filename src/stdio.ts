@@ -45,6 +45,8 @@ async function main(): Promise<void> {
       log.info('   To enable deployments, set DEPLOYHQ_READ_ONLY=false or use --read-only=false');
     }
 
+    const baseUrl = process.env.DEPLOYHQ_URL;
+
     // Validate credentials before starting server
     log.info('Validating credentials...');
     try {
@@ -53,6 +55,7 @@ async function main(): Promise<void> {
         password: apiKey,
         account,
         timeout: 10000, // 10 second timeout for validation
+        baseUrl,
       });
       await testClient.validateCredentials();
       log.info('✓ Credentials validated successfully');
@@ -68,7 +71,7 @@ async function main(): Promise<void> {
     }
 
     // Create MCP server with user credentials and configuration
-    const server = createMCPServer(email, apiKey, account, config);
+    const server = createMCPServer(email, apiKey, account, config, baseUrl);
 
     // Create stdio transport
     const transport = new StdioServerTransport();

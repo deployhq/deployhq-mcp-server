@@ -249,8 +249,8 @@ describe('Tool Schemas', () => {
   });
 
   describe('Tools Array', () => {
-    it('should export 12 tools', () => {
-      expect(tools).toHaveLength(12);
+    it('should export 17 tools', () => {
+      expect(tools).toHaveLength(17);
     });
 
     it('should have correct tool names', () => {
@@ -267,6 +267,11 @@ describe('Tool Schemas', () => {
       expect(toolNames).toContain('create_global_environment_variable');
       expect(toolNames).toContain('update_global_environment_variable');
       expect(toolNames).toContain('delete_global_environment_variable');
+      expect(toolNames).toContain('list_global_config_files');
+      expect(toolNames).toContain('get_global_config_file');
+      expect(toolNames).toContain('create_global_config_file');
+      expect(toolNames).toContain('update_global_config_file');
+      expect(toolNames).toContain('delete_global_config_file');
     });
 
     it('should have descriptions for all tools', () => {

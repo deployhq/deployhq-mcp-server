@@ -25,6 +25,11 @@ import {
   CreateGlobalEnvironmentVariableSchema,
   UpdateGlobalEnvironmentVariableSchema,
   DeleteGlobalEnvironmentVariableSchema,
+  ListGlobalConfigFilesSchema,
+  GetGlobalConfigFileSchema,
+  CreateGlobalConfigFileSchema,
+  UpdateGlobalConfigFileSchema,
+  DeleteGlobalConfigFileSchema,
 } from './tools.js';
 
 /**
@@ -34,7 +39,8 @@ export function createMCPServer(
   username: string,
   password: string,
   account: string,
-  config: ServerConfig = { readOnlyMode: false }
+  config: ServerConfig = { readOnlyMode: false },
+  baseUrl?: string
 ): Server {
   // Create DeployHQ client with user credentials
   const client = new DeployHQClient({
@@ -42,6 +48,7 @@ export function createMCPServer(
     password,
     account,
     timeout: 30000,
+    baseUrl,
   });
 
   const server = new Server(
@@ -142,6 +149,21 @@ export function createMCPServer(
 
           const validatedArgs = CreateDeploymentSchema.parse(args);
           const { project, ...deploymentParams } = validatedArgs;
+
+          // Translate human-friendly revision values to DeployHQ API constants.
+          // The API only accepts hex SHA hashes or special constants.
+          const isHexSha = (value: string) => /^[a-f0-9]{6,40}$/.test(value);
+
+          if (deploymentParams.end_revision && !isHexSha(deploymentParams.end_revision)) {
+            log.debug(`Translating end_revision "${deploymentParams.end_revision}" to __CURRENT__`);
+            deploymentParams.end_revision = '__CURRENT__';
+          }
+
+          if (deploymentParams.use_latest === '1' && deploymentParams.start_revision && !isHexSha(deploymentParams.start_revision)) {
+            log.debug(`Translating start_revision "${deploymentParams.start_revision}" to ___PREVIOUS___`);
+            deploymentParams.start_revision = '___PREVIOUS___';
+          }
+
           log.debug(`Creating deployment for project: ${project}`);
           result = await client.createDeployment(project, deploymentParams);
           log.debug('Deployment created');
@@ -225,6 +247,86 @@ export function createMCPServer(
           log.debug(`Deleting global environment variable: ${validatedArgs.id}`);
           result = await client.deleteGlobalEnvironmentVariable(validatedArgs.id);
           log.debug('Global environment variable deleted');
+          break;
+        }
+
+        case 'list_global_config_files': {
+          ListGlobalConfigFilesSchema.parse(args);
+          log.debug('Fetching global config files from API...');
+          result = await client.listGlobalConfigFiles();
+          log.debug(`Got ${Array.isArray(result) ? result.length : '?'} global config files`);
+          break;
+        }
+
+        case 'get_global_config_file': {
+          const validatedArgs = GetGlobalConfigFileSchema.parse(args);
+          log.debug(`Fetching global config file: ${validatedArgs.id}`);
+          result = await client.getGlobalConfigFile(validatedArgs.id);
+          log.debug('Got global config file details');
+          break;
+        }
+
+        case 'create_global_config_file': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global config file creation blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Global config file creation is disabled for security.\n\n' +
+              'To disable read-only mode:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode can be enabled to prevent ' +
+              'accidental changes when using AI assistants.'
+            );
+          }
+
+          const validatedArgs = CreateGlobalConfigFileSchema.parse(args);
+          log.debug(`Creating global config file: ${validatedArgs.path}`);
+          result = await client.createGlobalConfigFile(validatedArgs);
+          log.debug('Global config file created');
+          break;
+        }
+
+        case 'update_global_config_file': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global config file update blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Global config file update is disabled for security.\n\n' +
+              'To disable read-only mode:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode can be enabled to prevent ' +
+              'accidental changes when using AI assistants.'
+            );
+          }
+
+          const validatedArgs = UpdateGlobalConfigFileSchema.parse(args);
+          const { id, ...updateParams } = validatedArgs;
+          log.debug(`Updating global config file: ${id}`);
+          result = await client.updateGlobalConfigFile(id, updateParams);
+          log.debug('Global config file updated');
+          break;
+        }
+
+        case 'delete_global_config_file': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global config file deletion blocked by read-only mode');
+            throw new Error(
+              'FORBIDDEN: Server is running in read-only mode. ' +
+              'Global config file deletion is disabled for security.\n\n' +
+              'To disable read-only mode:\n' +
+              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
+              '- Or use CLI flag: --read-only=false\n\n' +
+              'Read-only mode can be enabled to prevent ' +
+              'accidental changes when using AI assistants.'
+            );
+          }
+
+          const validatedArgs = DeleteGlobalConfigFileSchema.parse(args);
+          log.debug(`Deleting global config file: ${validatedArgs.id}`);
+          result = await client.deleteGlobalConfigFile(validatedArgs.id);
+          log.debug('Global config file deleted');
           break;
         }
 
