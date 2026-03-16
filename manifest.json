@@ -1,0 +1,65 @@
+{
+  "manifest_version": "0.3",
+  "name": "deployhq-mcp-server",
+  "display_name": "DeployHQ",
+  "version": "1.2.2",
+  "description": "Manage deployment projects, servers, and deployments on DeployHQ via AI assistants.",
+  "author": {
+    "name": "DeployHQ",
+    "email": "support@deployhq.com",
+    "url": "https://www.deployhq.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deployhq/deployhq-mcp-server.git"
+  },
+  "homepage": "https://www.deployhq.com/support/mcp-server",
+  "support": "https://github.com/deployhq/deployhq-mcp-server/issues",
+  "icon": "deployhq-icon-512.png",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/stdio.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/stdio.js"],
+      "env": {
+        "DEPLOYHQ_EMAIL": "${user_config.deployhq_email}",
+        "DEPLOYHQ_API_KEY": "${user_config.deployhq_api_key}",
+        "DEPLOYHQ_ACCOUNT": "${user_config.deployhq_account}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "list_projects", "description": "List all projects in the DeployHQ account" },
+    { "name": "get_project", "description": "Get detailed information about a specific project" },
+    { "name": "list_servers", "description": "List all servers configured for a project" },
+    { "name": "list_deployments", "description": "List deployments for a project with pagination" },
+    { "name": "get_deployment", "description": "Get detailed information about a specific deployment" },
+    { "name": "get_deployment_log", "description": "Get the deployment log for debugging" },
+    { "name": "create_deployment", "description": "Create a new deployment for a project" }
+  ],
+  "keywords": ["deployment", "devops", "ci-cd", "hosting", "automation"],
+  "license": "MIT",
+  "privacy_policies": ["https://www.deployhq.com/privacy"],
+  "user_config": {
+    "deployhq_email": {
+      "type": "string",
+      "title": "DeployHQ Email",
+      "description": "Your DeployHQ login email address",
+      "required": true
+    },
+    "deployhq_api_key": {
+      "type": "string",
+      "title": "DeployHQ API Key",
+      "description": "API key from Settings > Security in DeployHQ",
+      "sensitive": true,
+      "required": true
+    },
+    "deployhq_account": {
+      "type": "string",
+      "title": "Account Name",
+      "description": "Your account name from https://ACCOUNT.deployhq.com",
+      "required": true
+    }
+  }
+}
