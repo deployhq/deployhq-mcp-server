@@ -39,8 +39,7 @@ export function createMCPServer(
   username: string,
   password: string,
   account: string,
-  config: ServerConfig = { readOnlyMode: false },
-  baseUrl?: string
+  config: ServerConfig = { readOnlyMode: false }
 ): Server {
   // Create DeployHQ client with user credentials
   const client = new DeployHQClient({
@@ -48,7 +47,6 @@ export function createMCPServer(
     password,
     account,
     timeout: 30000,
-    baseUrl,
   });
 
   const server = new Server(

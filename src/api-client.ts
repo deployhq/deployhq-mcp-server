@@ -180,7 +180,6 @@ export interface DeployHQClientConfig {
   password: string;
   account: string;
   timeout?: number;
-  baseUrl?: string;
 }
 
 /**
@@ -201,7 +200,7 @@ export class DeployHQClient {
       throw new Error('Missing required configuration: username, password, or account');
     }
 
-    this.baseUrl = config.baseUrl || `https://${config.account}.deployhq.com`;
+    this.baseUrl = `https://${config.account}.deployhq.com`;
     this.timeout = config.timeout || 30000;
 
     // Create Basic Auth header

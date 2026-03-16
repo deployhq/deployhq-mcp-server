@@ -272,7 +272,6 @@ Claude will:
 #### Optional
 - `LOG_LEVEL`: Controls log verbosity - `ERROR`, `INFO`, or `DEBUG` (default: `INFO`)
 - `NODE_ENV`: Environment mode - `production` or `development`
-- `DEPLOYHQ_URL`: Override the API base URL (default: `https://ACCOUNT.deployhq.com`). Useful for local development or staging environments.
 - `DEPLOYHQ_READ_ONLY`: Set to `true` to block all mutating operations (default: `false`)
 
 ### Log Levels
