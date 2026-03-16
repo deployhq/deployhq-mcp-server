@@ -32,8 +32,8 @@ The MCP server provides **17 tools** for AI assistants:
 | `delete_global_environment_variable` | Delete a global environment variable | `id` |
 | `list_global_config_files` | List all global config file templates | None |
 | `get_global_config_file` | Get a global config file with body | `id` |
-| `create_global_config_file` | Create a global config file template | `path`, `body`, `language?`, `description?`, `build?` |
-| `update_global_config_file` | Update a global config file template | `id`, `path?`, `body?`, `language?`, `description?`, `build?` |
+| `create_global_config_file` | Create a global config file template | `path`, `body`, `description?`, `build?` |
+| `update_global_config_file` | Update a global config file template | `id`, `path?`, `body?`, `description?`, `build?` |
 | `delete_global_config_file` | Delete a global config file template | `id` |
 
 ### `list_projects`
@@ -145,7 +145,6 @@ Create a new global config file template.
 **Parameters**:
 - `path` (string): File path (e.g. `config/database.yml`)
 - `body` (string): File contents
-- `language` (string, optional): Syntax language for the editor
 - `description` (string, optional): Description of the config file
 - `build` (boolean, optional): Use with build pipeline
 
@@ -156,7 +155,6 @@ Update an existing global config file template.
 - `id` (string): Config file identifier (UUID)
 - `path` (string, optional): File path
 - `body` (string, optional): File contents
-- `language` (string, optional): Syntax language
 - `description` (string, optional): Description
 - `build` (boolean, optional): Build pipeline flag
 
