@@ -146,13 +146,11 @@ export interface ConfigFile {
   path: string;
   body: string;
   build: boolean;
-  language: string;
 }
 
 export interface CreateGlobalConfigFileParams {
   path: string;
   body: string;
-  language?: string;
   description?: string;
   build?: boolean;
 }
@@ -160,7 +158,6 @@ export interface CreateGlobalConfigFileParams {
 export interface UpdateGlobalConfigFileParams {
   path?: string;
   body?: string;
-  language?: string;
   description?: string;
   build?: boolean;
 }

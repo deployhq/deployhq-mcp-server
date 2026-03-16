@@ -77,7 +77,6 @@ export const GetGlobalConfigFileSchema = z.object({
 export const CreateGlobalConfigFileSchema = z.object({
   path: z.string().describe('File path for the config file'),
   body: z.string().describe('File contents'),
-  language: z.string().optional().describe('File language (e.g. yaml, json)'),
   description: z.string().optional().describe('Description of the config file'),
   build: z.boolean().optional().describe('Whether the config file is used during builds'),
 });
@@ -86,7 +85,6 @@ export const UpdateGlobalConfigFileSchema = z.object({
   id: z.string().describe('Config file identifier (UUID)'),
   path: z.string().optional().describe('File path for the config file'),
   body: z.string().optional().describe('File contents'),
-  language: z.string().optional().describe('File language (e.g. yaml, json)'),
   description: z.string().optional().describe('Description of the config file'),
   build: z.boolean().optional().describe('Whether the config file is used during builds'),
 });
@@ -402,10 +400,6 @@ export const tools = [
           type: 'string',
           description: 'File contents',
         },
-        language: {
-          type: 'string',
-          description: 'File language (e.g. yaml, json) (optional)',
-        },
         description: {
           type: 'string',
           description: 'Description of the config file (optional)',
@@ -421,7 +415,7 @@ export const tools = [
   {
     name: 'update_global_config_file',
     description:
-      'Update an existing global (account-level) config file template. Can change the path, body, language, description, or build setting.',
+      'Update an existing global (account-level) config file template. Can change the path, body, description, or build setting.',
     annotations: {
       readOnlyHint: false,
       destructiveHint: false,
@@ -440,10 +434,6 @@ export const tools = [
         body: {
           type: 'string',
           description: 'File contents (optional)',
-        },
-        language: {
-          type: 'string',
-          description: 'File language (e.g. yaml, json) (optional)',
         },
         description: {
           type: 'string',
