@@ -145,15 +145,18 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
             case 'create_deployment': {
               if (config.readOnlyMode) {
                 log.info('⚠️  Deployment creation blocked by read-only mode');
-                throw new Error(
-                  'FORBIDDEN: Server is running in read-only mode. ' +
-                  'Deployment creation is disabled for security.\n\n' +
-                  'To enable deployments:\n' +
-                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-                  '- Or use CLI flag: --read-only=false\n\n' +
-                  'Read-only mode is enabled by default to prevent ' +
-                  'accidental deployments when using AI assistants.'
-                );
+                res.status(403).json({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: 'FORBIDDEN: Server is running in read-only mode. ' +
+                      'Deployment creation is disabled for security. ' +
+                      'To enable deployments: Set environment variable DEPLOYHQ_READ_ONLY=false or use CLI flag --read-only=false. ' +
+                      'Read-only mode is enabled by default to prevent accidental deployments when using AI assistants.'
+                  }
+                });
+                return;
               }
 
               const validatedArgs = CreateDeploymentSchema.parse(args);
@@ -181,15 +184,17 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
             case 'create_global_environment_variable': {
               if (config.readOnlyMode) {
                 log.info('⚠️  Global environment variable creation blocked by read-only mode');
-                throw new Error(
-                  'FORBIDDEN: Server is running in read-only mode. ' +
-                  'Global environment variable creation is disabled for security.\n\n' +
-                  'To enable mutations:\n' +
-                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-                  '- Or use CLI flag: --read-only=false\n\n' +
-                  'Read-only mode is enabled by default to prevent ' +
-                  'accidental changes when using AI assistants.'
-                );
+                res.status(403).json({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: 'FORBIDDEN: Server is running in read-only mode. ' +
+                      'Global environment variable creation is disabled for security. ' +
+                      'To enable mutations: Set environment variable DEPLOYHQ_READ_ONLY=false or use CLI flag --read-only=false.'
+                  }
+                });
+                return;
               }
               const validatedArgs = CreateGlobalEnvironmentVariableSchema.parse(args);
               result = await client.createGlobalEnvironmentVariable(validatedArgs);
@@ -199,34 +204,38 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
             case 'update_global_environment_variable': {
               if (config.readOnlyMode) {
                 log.info('⚠️  Global environment variable update blocked by read-only mode');
-                throw new Error(
-                  'FORBIDDEN: Server is running in read-only mode. ' +
-                  'Global environment variable updates are disabled for security.\n\n' +
-                  'To enable mutations:\n' +
-                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-                  '- Or use CLI flag: --read-only=false\n\n' +
-                  'Read-only mode is enabled by default to prevent ' +
-                  'accidental changes when using AI assistants.'
-                );
+                res.status(403).json({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: 'FORBIDDEN: Server is running in read-only mode. ' +
+                      'Global environment variable updates are disabled for security. ' +
+                      'To enable mutations: Set environment variable DEPLOYHQ_READ_ONLY=false or use CLI flag --read-only=false.'
+                  }
+                });
+                return;
               }
               const validatedArgs = UpdateGlobalEnvironmentVariableSchema.parse(args);
-              const { id, ...updateParams } = validatedArgs;
-              result = await client.updateGlobalEnvironmentVariable(id, updateParams);
+              const { id: envVarId, ...updateParams } = validatedArgs;
+              result = await client.updateGlobalEnvironmentVariable(envVarId, updateParams);
               break;
             }
 
             case 'delete_global_environment_variable': {
               if (config.readOnlyMode) {
                 log.info('⚠️  Global environment variable deletion blocked by read-only mode');
-                throw new Error(
-                  'FORBIDDEN: Server is running in read-only mode. ' +
-                  'Global environment variable deletion is disabled for security.\n\n' +
-                  'To enable mutations:\n' +
-                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-                  '- Or use CLI flag: --read-only=false\n\n' +
-                  'Read-only mode is enabled by default to prevent ' +
-                  'accidental changes when using AI assistants.'
-                );
+                res.status(403).json({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: 'FORBIDDEN: Server is running in read-only mode. ' +
+                      'Global environment variable deletion is disabled for security. ' +
+                      'To enable mutations: Set environment variable DEPLOYHQ_READ_ONLY=false or use CLI flag --read-only=false.'
+                  }
+                });
+                return;
               }
               const validatedArgs = DeleteGlobalEnvironmentVariableSchema.parse(args);
               result = await client.deleteGlobalEnvironmentVariable(validatedArgs.id);
@@ -247,15 +256,17 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
             case 'create_global_config_file': {
               if (config.readOnlyMode) {
                 log.info('⚠️  Global config file creation blocked by read-only mode');
-                throw new Error(
-                  'FORBIDDEN: Server is running in read-only mode. ' +
-                  'Global config file creation is disabled for security.\n\n' +
-                  'To enable mutations:\n' +
-                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-                  '- Or use CLI flag: --read-only=false\n\n' +
-                  'Read-only mode is enabled by default to prevent ' +
-                  'accidental changes when using AI assistants.'
-                );
+                res.status(403).json({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: 'FORBIDDEN: Server is running in read-only mode. ' +
+                      'Global config file creation is disabled for security. ' +
+                      'To enable mutations: Set environment variable DEPLOYHQ_READ_ONLY=false or use CLI flag --read-only=false.'
+                  }
+                });
+                return;
               }
               const validatedArgs = CreateGlobalConfigFileSchema.parse(args);
               result = await client.createGlobalConfigFile(validatedArgs);
@@ -265,34 +276,38 @@ export function setupHTTPRoutes(app: Express, config: ServerConfig): void {
             case 'update_global_config_file': {
               if (config.readOnlyMode) {
                 log.info('⚠️  Global config file update blocked by read-only mode');
-                throw new Error(
-                  'FORBIDDEN: Server is running in read-only mode. ' +
-                  'Global config file updates are disabled for security.\n\n' +
-                  'To enable mutations:\n' +
-                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-                  '- Or use CLI flag: --read-only=false\n\n' +
-                  'Read-only mode is enabled by default to prevent ' +
-                  'accidental changes when using AI assistants.'
-                );
+                res.status(403).json({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: 'FORBIDDEN: Server is running in read-only mode. ' +
+                      'Global config file updates are disabled for security. ' +
+                      'To enable mutations: Set environment variable DEPLOYHQ_READ_ONLY=false or use CLI flag --read-only=false.'
+                  }
+                });
+                return;
               }
               const validatedArgs = UpdateGlobalConfigFileSchema.parse(args);
-              const { id, ...updateParams } = validatedArgs;
-              result = await client.updateGlobalConfigFile(id, updateParams);
+              const { id: configFileId, ...updateParams } = validatedArgs;
+              result = await client.updateGlobalConfigFile(configFileId, updateParams);
               break;
             }
 
             case 'delete_global_config_file': {
               if (config.readOnlyMode) {
                 log.info('⚠️  Global config file deletion blocked by read-only mode');
-                throw new Error(
-                  'FORBIDDEN: Server is running in read-only mode. ' +
-                  'Global config file deletion is disabled for security.\n\n' +
-                  'To enable mutations:\n' +
-                  '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-                  '- Or use CLI flag: --read-only=false\n\n' +
-                  'Read-only mode is enabled by default to prevent ' +
-                  'accidental changes when using AI assistants.'
-                );
+                res.status(403).json({
+                  jsonrpc: '2.0',
+                  id,
+                  error: {
+                    code: -32603,
+                    message: 'FORBIDDEN: Server is running in read-only mode. ' +
+                      'Global config file deletion is disabled for security. ' +
+                      'To enable mutations: Set environment variable DEPLOYHQ_READ_ONLY=false or use CLI flag --read-only=false.'
+                  }
+                });
+                return;
               }
               const validatedArgs = DeleteGlobalConfigFileSchema.parse(args);
               result = await client.deleteGlobalConfigFile(validatedArgs.id);

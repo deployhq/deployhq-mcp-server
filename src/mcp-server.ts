@@ -71,7 +71,11 @@ export function createMCPServer(
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     log.info(`Calling tool: ${name}`);
-    log.debug('Tool arguments:', JSON.stringify(args));
+    // Redact sensitive fields before logging to prevent secret leaks
+    const safeArgs = { ...args };
+    if ('value' in safeArgs) (safeArgs as Record<string, unknown>).value = '[REDACTED]';
+    if ('body' in safeArgs) (safeArgs as Record<string, unknown>).body = '[REDACTED]';
+    log.debug('Tool arguments:', JSON.stringify(safeArgs));
 
     try {
       let result: unknown;
@@ -147,20 +151,6 @@ export function createMCPServer(
 
           const validatedArgs = CreateDeploymentSchema.parse(args);
           const { project, ...deploymentParams } = validatedArgs;
-
-          // Translate human-friendly revision values to DeployHQ API constants.
-          // The API only accepts hex SHA hashes or special constants.
-          const isHexSha = (value: string) => /^[a-f0-9]{6,40}$/.test(value);
-
-          if (deploymentParams.end_revision && !isHexSha(deploymentParams.end_revision)) {
-            log.debug(`Translating end_revision "${deploymentParams.end_revision}" to __CURRENT__`);
-            deploymentParams.end_revision = '__CURRENT__';
-          }
-
-          if (deploymentParams.use_latest === '1' && deploymentParams.start_revision && !isHexSha(deploymentParams.start_revision)) {
-            log.debug(`Translating start_revision "${deploymentParams.start_revision}" to ___PREVIOUS___`);
-            deploymentParams.start_revision = '___PREVIOUS___';
-          }
 
           log.debug(`Creating deployment for project: ${project}`);
           result = await client.createDeployment(project, deploymentParams);

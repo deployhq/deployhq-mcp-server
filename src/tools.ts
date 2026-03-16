@@ -38,13 +38,13 @@ export const CreateDeploymentSchema = z.object({
   project: z.string().describe('Project permalink'),
   parent_identifier: z.string().describe('Server or server group UUID'),
   start_revision: z.string().describe('Start commit hash or revision'),
-  end_revision: z.string().describe('End commit SHA hash, or "latest"/"HEAD"/branch name to deploy the latest commit on the branch'),
+  end_revision: z.string().describe('End commit SHA hash, or use __CURRENT__ to deploy the latest commit'),
   branch: z.string().optional().describe('Branch to deploy from'),
   mode: z.enum(['queue', 'preview']).optional().describe('Deployment mode: queue to deploy immediately, preview to preview changes'),
   copy_config_files: z.boolean().optional().describe('Whether to copy config files'),
   run_build_commands: z.boolean().optional().describe('Whether to run build commands'),
   use_build_cache: z.boolean().optional().describe('Whether to use build cache'),
-  use_latest: z.string().optional().describe('Set to "1" to use the last successfully deployed commit as start_revision (start_revision will be translated to the ___PREVIOUS___ constant)'),
+  use_latest: z.string().optional().describe('Set to "1" to use the last successfully deployed commit as start_revision'),
 });
 
 export const ListGlobalEnvironmentVariablesSchema = z.object({});
@@ -62,7 +62,10 @@ export const UpdateGlobalEnvironmentVariableSchema = z.object({
   value: z.string().optional().describe('Environment variable value'),
   locked: z.boolean().optional().describe('Whether the variable is locked'),
   build_pipeline: z.boolean().optional().describe('Whether the variable is available in the build pipeline'),
-});
+}).refine(
+  data => data.name !== undefined || data.value !== undefined || data.locked !== undefined || data.build_pipeline !== undefined,
+  { message: 'At least one field to update must be provided' }
+);
 
 export const DeleteGlobalEnvironmentVariableSchema = z.object({
   id: z.coerce.string().describe('Environment variable identifier'),
@@ -87,7 +90,10 @@ export const UpdateGlobalConfigFileSchema = z.object({
   body: z.string().optional().describe('File contents'),
   description: z.string().optional().describe('Description of the config file'),
   build: z.boolean().optional().describe('Whether the config file is used during builds'),
-});
+}).refine(
+  data => data.path !== undefined || data.body !== undefined || data.description !== undefined || data.build !== undefined,
+  { message: 'At least one field to update must be provided' }
+);
 
 export const DeleteGlobalConfigFileSchema = z.object({
   id: z.string().describe('Config file identifier (UUID)'),
@@ -220,7 +226,7 @@ export const tools = [
         },
         end_revision: {
           type: 'string',
-          description: 'Ending commit SHA hash, or "latest"/"HEAD"/branch name to deploy the latest commit on the branch (automatically resolved)',
+          description: 'Ending commit SHA hash, or use __CURRENT__ to deploy the latest commit',
         },
         branch: {
           type: 'string',
