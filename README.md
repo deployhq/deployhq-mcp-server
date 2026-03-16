@@ -311,7 +311,7 @@ Example:
 ## 📦 Prerequisites
 
 - **Node.js 18+** (Node 20+ recommended)
-- **DeployHQ account with API access** (API is **not available** for Solo and Free plans)
+- **DeployHQ account with API access** (available on all paid plans)
 
 **Note**: The server uses `node-fetch` for HTTP requests. Node 18+ is required for development tools (ESLint, Vitest).
 
