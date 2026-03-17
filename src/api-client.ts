@@ -352,60 +352,40 @@ export class DeployHQClient {
 
   /**
    * Gets the deployment log for a specific deployment
+   * Fetches all step logs and combines them into a single text output
    * @param project - Project permalink
    * @param uuid - Deployment UUID
    * @returns Deployment log as text
    */
   async getDeploymentLog(project: string, uuid: string): Promise<string> {
-    const url = `${this.baseUrl}/projects/${project}/deployments/${uuid}/log`;
+    const deployment = await this.getDeployment(project, uuid) as Deployment & { steps?: Array<{ identifier: string; step: string }> };
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-    try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': this.authHeader,
-          'Accept': 'text/plain',
-          'User-Agent': 'DeployHQ-MCP-Server/1.0.0',
-        },
-        signal: controller.signal,
-      } as NodeFetchRequestInit);
-
-      clearTimeout(timeoutId);
-
-      if (response.status === 401 || response.status === 403) {
-        throw new AuthenticationError('Invalid credentials or insufficient permissions');
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        throw new DeployHQError(
-          `Failed to fetch deployment log: ${response.statusText}`,
-          response.status,
-          errorText
-        );
-      }
-
-      return await response.text();
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof DeployHQError) {
-        throw error;
-      }
-
-      if ((error as Error).name === 'AbortError') {
-        throw new DeployHQError('Request timeout', 408);
-      }
-
-      throw new DeployHQError(
-        `Request failed: ${(error as Error).message}`,
-        undefined,
-        error
-      );
+    if (!deployment.steps || deployment.steps.length === 0) {
+      return 'No deployment steps found.';
     }
+
+    const logParts: string[] = [];
+
+    for (const step of deployment.steps) {
+      try {
+        const logs = await this.request<Array<{ message: string; detail?: string; type: string }>>(
+          `/projects/${project}/deployments/${uuid}/steps/${step.identifier}/logs`
+        );
+
+        if (logs && logs.length > 0) {
+          logParts.push(`=== ${step.step} ===`);
+          for (const entry of logs) {
+            const detail = entry.detail ? ` ${entry.detail}` : '';
+            logParts.push(`[${entry.type}] ${entry.message}${detail}`);
+          }
+          logParts.push('');
+        }
+      } catch {
+        // Skip steps with no logs
+      }
+    }
+
+    return logParts.length > 0 ? logParts.join('\n') : 'No log entries found.';
   }
 
   /**
