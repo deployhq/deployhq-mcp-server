@@ -101,6 +101,11 @@ export const DeleteGlobalConfigFileSchema = z.object({
 
 export const ListSshKeysSchema = z.object({});
 
+export const CreateSshKeySchema = z.object({
+  title: z.string().describe('Title for the SSH key'),
+  key_type: z.string().optional().describe('Key type: ED25519 (default) or RSA'),
+});
+
 /**
  * Tool definitions for MCP server
  */
@@ -483,6 +488,23 @@ export const tools = [
     inputSchema: {
       type: 'object',
       properties: {},
+    },
+  },
+  {
+    name: 'create_ssh_key',
+    description:
+      'Create a new SSH key pair for the account. Returns the public key which can be added to your repository host or servers for authentication.',
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+    },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Title for the SSH key' },
+        key_type: { type: 'string', description: 'Key type: ED25519 (default) or RSA (optional)' },
+      },
+      required: ['title'],
     },
   },
 ] as const;

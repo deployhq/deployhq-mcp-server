@@ -249,8 +249,8 @@ describe('Tool Schemas', () => {
   });
 
   describe('Tools Array', () => {
-    it('should export 17 tools', () => {
-      expect(tools).toHaveLength(17);
+    it('should export 18 tools', () => {
+      expect(tools).toHaveLength(18);
     });
 
     it('should have correct tool names', () => {
@@ -263,6 +263,7 @@ describe('Tool Schemas', () => {
       expect(toolNames).toContain('get_deployment_log');
       expect(toolNames).toContain('create_deployment');
       expect(toolNames).toContain('list_ssh_keys');
+      expect(toolNames).toContain('create_ssh_key');
       expect(toolNames).toContain('list_global_environment_variables');
       expect(toolNames).toContain('create_global_environment_variable');
       expect(toolNames).toContain('update_global_environment_variable');
