@@ -114,6 +114,66 @@ export interface CreateDeploymentParams {
   use_latest?: string;
 }
 
+export interface EnvironmentVariable {
+  identifier: number;
+  name: string;
+  masked_value: string;
+  locked: boolean;
+  build_pipeline: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateGlobalEnvironmentVariableParams {
+  name: string;
+  value: string;
+  locked?: boolean;
+  build_pipeline?: boolean;
+}
+
+export interface SshKey {
+  identifier: string;
+  title: string;
+  public_key: string;
+  key_type: string;
+  fingerprint: string;
+  account: boolean;
+}
+
+export interface ConfigFile {
+  identifier: string;
+  description: string;
+  path: string;
+  body: string;
+  build: boolean;
+}
+
+export interface CreateGlobalConfigFileParams {
+  path: string;
+  body: string;
+  description?: string;
+  build?: boolean;
+}
+
+export interface UpdateGlobalConfigFileParams {
+  path?: string;
+  body?: string;
+  description?: string;
+  build?: boolean;
+}
+
+export interface CreateSshKeyParams {
+  title: string;
+  key_type?: string;
+}
+
+export interface UpdateGlobalEnvironmentVariableParams {
+  name?: string;
+  value?: string;
+  locked?: boolean;
+  build_pipeline?: boolean;
+}
+
 /**
  * Configuration for DeployHQ API client
  */
@@ -122,6 +182,7 @@ export interface DeployHQClientConfig {
   password: string;
   account: string;
   timeout?: number;
+  baseUrl?: string;
 }
 
 /**
@@ -142,7 +203,7 @@ export class DeployHQClient {
       throw new Error('Missing required configuration: username, password, or account');
     }
 
-    this.baseUrl = `https://${config.account}.deployhq.com`;
+    this.baseUrl = config.baseUrl || `https://${config.account}.deployhq.com`;
     this.timeout = config.timeout || 30000;
 
     // Create Basic Auth header
@@ -297,60 +358,167 @@ export class DeployHQClient {
 
   /**
    * Gets the deployment log for a specific deployment
+   * Fetches all step logs and combines them into a single text output
    * @param project - Project permalink
    * @param uuid - Deployment UUID
    * @returns Deployment log as text
    */
   async getDeploymentLog(project: string, uuid: string): Promise<string> {
-    const url = `${this.baseUrl}/projects/${project}/deployments/${uuid}/log`;
+    const deployment = await this.getDeployment(project, uuid) as Deployment & { steps?: Array<{ identifier: string; step: string }> };
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-    try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': this.authHeader,
-          'Accept': 'text/plain',
-          'User-Agent': 'DeployHQ-MCP-Server/1.0.0',
-        },
-        signal: controller.signal,
-      } as NodeFetchRequestInit);
-
-      clearTimeout(timeoutId);
-
-      if (response.status === 401 || response.status === 403) {
-        throw new AuthenticationError('Invalid credentials or insufficient permissions');
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Unknown error');
-        throw new DeployHQError(
-          `Failed to fetch deployment log: ${response.statusText}`,
-          response.status,
-          errorText
-        );
-      }
-
-      return await response.text();
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof DeployHQError) {
-        throw error;
-      }
-
-      if ((error as Error).name === 'AbortError') {
-        throw new DeployHQError('Request timeout', 408);
-      }
-
-      throw new DeployHQError(
-        `Request failed: ${(error as Error).message}`,
-        undefined,
-        error
-      );
+    if (!deployment.steps || deployment.steps.length === 0) {
+      return 'No deployment steps found.';
     }
+
+    const logParts: string[] = [];
+
+    for (const step of deployment.steps) {
+      try {
+        const logs = await this.request<Array<{ message: string; detail?: string; type: string }>>(
+          `/projects/${project}/deployments/${uuid}/steps/${step.identifier}/logs`
+        );
+
+        if (logs && logs.length > 0) {
+          logParts.push(`=== ${step.step} ===`);
+          for (const entry of logs) {
+            const detail = entry.detail ? ` ${entry.detail}` : '';
+            logParts.push(`[${entry.type}] ${entry.message}${detail}`);
+          }
+          logParts.push('');
+        }
+      } catch {
+        // Skip steps with no logs
+      }
+    }
+
+    return logParts.length > 0 ? logParts.join('\n') : 'No log entries found.';
+  }
+
+  /**
+   * Lists all SSH public keys for the account
+   * @returns Array of SSH keys (public keys only)
+   */
+  async listSshKeys(): Promise<SshKey[]> {
+    return this.request<SshKey[]>('/ssh_keys');
+  }
+
+  /**
+   * Creates a new SSH key pair for the account
+   * @param params - SSH key parameters
+   * @returns Created SSH key
+   */
+  async createSshKey(params: CreateSshKeyParams): Promise<SshKey> {
+    return this.request<SshKey>('/ssh_keys', {
+      method: 'POST',
+      body: JSON.stringify({ key_pair: params }),
+    });
+  }
+
+  /**
+   * Lists all global environment variables for the account
+   * @returns Array of environment variables
+   */
+  async listGlobalEnvironmentVariables(): Promise<EnvironmentVariable[]> {
+    return this.request<EnvironmentVariable[]>('/global_environment_variables');
+  }
+
+  /**
+   * Creates a new global environment variable
+   * @param params - Environment variable parameters
+   * @returns Created environment variable
+   */
+  async createGlobalEnvironmentVariable(
+    params: CreateGlobalEnvironmentVariableParams
+  ): Promise<EnvironmentVariable> {
+    return this.request<EnvironmentVariable>('/global_environment_variables', {
+      method: 'POST',
+      body: JSON.stringify({ environment_variable: params }),
+    });
+  }
+
+  /**
+   * Updates an existing global environment variable
+   * @param id - Environment variable identifier
+   * @param params - Environment variable parameters to update
+   * @returns Updated environment variable
+   */
+  async updateGlobalEnvironmentVariable(
+    id: string,
+    params: UpdateGlobalEnvironmentVariableParams
+  ): Promise<EnvironmentVariable> {
+    return this.request<EnvironmentVariable>(`/global_environment_variables/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ environment_variable: params }),
+    });
+  }
+
+  /**
+   * Deletes a global environment variable
+   * @param id - Environment variable identifier
+   * @returns Deletion status response
+   */
+  async deleteGlobalEnvironmentVariable(id: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/global_environment_variables/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Lists all global config file templates for the account
+   * @returns Array of config files
+   */
+  async listGlobalConfigFiles(): Promise<ConfigFile[]> {
+    return this.request<ConfigFile[]>('/global_config_files');
+  }
+
+  /**
+   * Gets a specific global config file template
+   * @param id - Config file identifier (UUID)
+   * @returns Config file details including body
+   */
+  async getGlobalConfigFile(id: string): Promise<ConfigFile> {
+    return this.request<ConfigFile>(`/global_config_files/${id}`);
+  }
+
+  /**
+   * Creates a new global config file template
+   * @param params - Config file parameters
+   * @returns Created config file
+   */
+  async createGlobalConfigFile(
+    params: CreateGlobalConfigFileParams
+  ): Promise<ConfigFile> {
+    return this.request<ConfigFile>('/global_config_files', {
+      method: 'POST',
+      body: JSON.stringify({ config_file: params }),
+    });
+  }
+
+  /**
+   * Updates an existing global config file template
+   * @param id - Config file identifier (UUID)
+   * @param params - Config file parameters to update
+   * @returns Updated config file
+   */
+  async updateGlobalConfigFile(
+    id: string,
+    params: UpdateGlobalConfigFileParams
+  ): Promise<ConfigFile> {
+    return this.request<ConfigFile>(`/global_config_files/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ config_file: params }),
+    });
+  }
+
+  /**
+   * Deletes a global config file template
+   * @param id - Config file identifier (UUID)
+   * @returns Deletion status response
+   */
+  async deleteGlobalConfigFile(id: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/global_config_files/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   /**

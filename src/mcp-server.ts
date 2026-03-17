@@ -20,7 +20,25 @@ import {
   GetDeploymentSchema,
   GetDeploymentLogSchema,
   CreateDeploymentSchema,
+  ListSshKeysSchema,
+  CreateSshKeySchema,
+  ListGlobalEnvironmentVariablesSchema,
+  CreateGlobalEnvironmentVariableSchema,
+  UpdateGlobalEnvironmentVariableSchema,
+  DeleteGlobalEnvironmentVariableSchema,
+  ListGlobalConfigFilesSchema,
+  GetGlobalConfigFileSchema,
+  CreateGlobalConfigFileSchema,
+  UpdateGlobalConfigFileSchema,
+  DeleteGlobalConfigFileSchema,
 } from './tools.js';
+
+/**
+ * Creates a standardized read-only mode error message
+ */
+function readOnlyError(operation: string): string {
+  return `FORBIDDEN: Server is running in read-only mode. ${operation} is disabled for security.\n\nTo enable mutations:\n- Set environment variable: DEPLOYHQ_READ_ONLY=false\n- Or use CLI flag: --read-only=false\n\nRead-only mode is enabled by default to prevent accidental changes when using AI assistants.`;
+}
 
 /**
  * Creates the MCP server instance with per-request client initialization
@@ -29,7 +47,8 @@ export function createMCPServer(
   username: string,
   password: string,
   account: string,
-  config: ServerConfig = { readOnlyMode: false }
+  config: ServerConfig = { readOnlyMode: false },
+  baseUrl?: string
 ): Server {
   // Create DeployHQ client with user credentials
   const client = new DeployHQClient({
@@ -37,6 +56,7 @@ export function createMCPServer(
     password,
     account,
     timeout: 30000,
+    baseUrl,
   });
 
   const server = new Server(
@@ -61,7 +81,11 @@ export function createMCPServer(
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     log.info(`Calling tool: ${name}`);
-    log.debug('Tool arguments:', JSON.stringify(args));
+    // Redact sensitive fields before logging to prevent secret leaks
+    const safeArgs = { ...args };
+    if ('value' in safeArgs) (safeArgs as Record<string, unknown>).value = '[REDACTED]';
+    if ('body' in safeArgs) (safeArgs as Record<string, unknown>).body = '[REDACTED]';
+    log.debug('Tool arguments:', JSON.stringify(safeArgs));
 
     try {
       let result: unknown;
@@ -121,25 +145,142 @@ export function createMCPServer(
         }
 
         case 'create_deployment': {
-          // Check if server is in read-only mode
           if (config.readOnlyMode) {
             log.info('⚠️  Deployment creation blocked by read-only mode');
-            throw new Error(
-              'FORBIDDEN: Server is running in read-only mode. ' +
-              'Deployment creation is disabled for security.\n\n' +
-              'To disable read-only mode:\n' +
-              '- Set environment variable: DEPLOYHQ_READ_ONLY=false\n' +
-              '- Or use CLI flag: --read-only=false\n\n' +
-              'Read-only mode can be enabled to prevent ' +
-              'accidental deployments when using AI assistants.'
-            );
+            throw new Error(readOnlyError('Deployment creation'));
           }
 
           const validatedArgs = CreateDeploymentSchema.parse(args);
           const { project, ...deploymentParams } = validatedArgs;
+
           log.debug(`Creating deployment for project: ${project}`);
           result = await client.createDeployment(project, deploymentParams);
           log.debug('Deployment created');
+          break;
+        }
+
+        case 'list_ssh_keys': {
+          ListSshKeysSchema.parse(args);
+          log.debug('Fetching SSH keys from API...');
+          result = await client.listSshKeys();
+          log.debug(`Got ${Array.isArray(result) ? result.length : '?'} SSH keys`);
+          break;
+        }
+
+        case 'create_ssh_key': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  SSH key creation blocked by read-only mode');
+            throw new Error(readOnlyError('SSH key creation'));
+          }
+
+          const validatedArgs = CreateSshKeySchema.parse(args);
+          log.debug(`Creating SSH key: ${validatedArgs.title}`);
+          result = await client.createSshKey(validatedArgs);
+          log.debug('SSH key created');
+          break;
+        }
+
+        case 'list_global_environment_variables': {
+          ListGlobalEnvironmentVariablesSchema.parse(args);
+          log.debug('Fetching global environment variables from API...');
+          result = await client.listGlobalEnvironmentVariables();
+          log.debug(`Got ${Array.isArray(result) ? result.length : '?'} global environment variables`);
+          break;
+        }
+
+        case 'create_global_environment_variable': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global environment variable creation blocked by read-only mode');
+            throw new Error(readOnlyError('Global environment variable creation'));
+          }
+
+          const validatedArgs = CreateGlobalEnvironmentVariableSchema.parse(args);
+          log.debug(`Creating global environment variable: ${validatedArgs.name}`);
+          result = await client.createGlobalEnvironmentVariable(validatedArgs);
+          log.debug('Global environment variable created');
+          break;
+        }
+
+        case 'update_global_environment_variable': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global environment variable update blocked by read-only mode');
+            throw new Error(readOnlyError('Global environment variable update'));
+          }
+
+          const validatedArgs = UpdateGlobalEnvironmentVariableSchema.parse(args);
+          const { id, ...updateParams } = validatedArgs;
+          log.debug(`Updating global environment variable: ${id}`);
+          result = await client.updateGlobalEnvironmentVariable(id, updateParams);
+          log.debug('Global environment variable updated');
+          break;
+        }
+
+        case 'delete_global_environment_variable': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global environment variable deletion blocked by read-only mode');
+            throw new Error(readOnlyError('Global environment variable deletion'));
+          }
+
+          const validatedArgs = DeleteGlobalEnvironmentVariableSchema.parse(args);
+          log.debug(`Deleting global environment variable: ${validatedArgs.id}`);
+          result = await client.deleteGlobalEnvironmentVariable(validatedArgs.id);
+          log.debug('Global environment variable deleted');
+          break;
+        }
+
+        case 'list_global_config_files': {
+          ListGlobalConfigFilesSchema.parse(args);
+          log.debug('Fetching global config files from API...');
+          result = await client.listGlobalConfigFiles();
+          log.debug(`Got ${Array.isArray(result) ? result.length : '?'} global config files`);
+          break;
+        }
+
+        case 'get_global_config_file': {
+          const validatedArgs = GetGlobalConfigFileSchema.parse(args);
+          log.debug(`Fetching global config file: ${validatedArgs.id}`);
+          result = await client.getGlobalConfigFile(validatedArgs.id);
+          log.debug('Got global config file details');
+          break;
+        }
+
+        case 'create_global_config_file': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global config file creation blocked by read-only mode');
+            throw new Error(readOnlyError('Global config file creation'));
+          }
+
+          const validatedArgs = CreateGlobalConfigFileSchema.parse(args);
+          log.debug(`Creating global config file: ${validatedArgs.path}`);
+          result = await client.createGlobalConfigFile(validatedArgs);
+          log.debug('Global config file created');
+          break;
+        }
+
+        case 'update_global_config_file': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global config file update blocked by read-only mode');
+            throw new Error(readOnlyError('Global config file update'));
+          }
+
+          const validatedArgs = UpdateGlobalConfigFileSchema.parse(args);
+          const { id, ...updateParams } = validatedArgs;
+          log.debug(`Updating global config file: ${id}`);
+          result = await client.updateGlobalConfigFile(id, updateParams);
+          log.debug('Global config file updated');
+          break;
+        }
+
+        case 'delete_global_config_file': {
+          if (config.readOnlyMode) {
+            log.info('⚠️  Global config file deletion blocked by read-only mode');
+            throw new Error(readOnlyError('Global config file deletion'));
+          }
+
+          const validatedArgs = DeleteGlobalConfigFileSchema.parse(args);
+          log.debug(`Deleting global config file: ${validatedArgs.id}`);
+          result = await client.deleteGlobalConfigFile(validatedArgs.id);
+          log.debug('Global config file deleted');
           break;
         }
 
