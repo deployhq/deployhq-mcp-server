@@ -14,7 +14,7 @@ A Model Context Protocol (MCP) server for DeployHQ that enables AI assistants li
 
 ## 📋 Available Tools
 
-The MCP server provides **17 tools** for AI assistants:
+The MCP server provides **18 tools** for AI assistants:
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
@@ -26,6 +26,7 @@ The MCP server provides **17 tools** for AI assistants:
 | `get_deployment_log` | Get deployment log output | `project`, `uuid` |
 | `create_deployment` | Create new deployment | `project`, `parent_identifier`, `start_revision`, `end_revision`, + optional params |
 | `list_ssh_keys` | List all SSH public keys | None |
+| `create_ssh_key` | Create a new SSH key pair | `title`, `key_type?` |
 | `list_global_environment_variables` | List all global environment variables | None |
 | `create_global_environment_variable` | Create a global environment variable | `name`, `value`, `locked?`, `build_pipeline?` |
 | `update_global_environment_variable` | Update a global environment variable | `id`, `name?`, `value?`, `locked?`, `build_pipeline?` |
@@ -97,6 +98,13 @@ Create a new deployment for a project.
 List all SSH public keys for the account.
 
 **Returns**: Array of SSH keys with public keys, fingerprints, and key types. Never returns private keys.
+
+### `create_ssh_key`
+Create a new SSH key pair for the account.
+
+**Parameters**:
+- `title` (string): Title for the SSH key
+- `key_type` (string, optional): Key type — ED25519 (default) or RSA
 
 ### `list_global_environment_variables`
 List all global (account-level) environment variables.
@@ -470,7 +478,7 @@ Configure your local `.claude.json` to use the built version:
 The project includes a comprehensive test suite using Vitest:
 
 **Test Coverage:**
-- ✅ **Tool Schema Validation** - All 17 MCP tool schemas with valid/invalid inputs
+- ✅ **Tool Schema Validation** - All 18 MCP tool schemas with valid/invalid inputs
 - ✅ **API Client Methods** - All DeployHQ API methods with mocked responses
 - ✅ **Error Handling** - Authentication, validation, and network errors
 - ✅ **MCP Server Factory** - Server creation and configuration
