@@ -14,7 +14,7 @@ A Model Context Protocol (MCP) server for DeployHQ that enables AI assistants li
 
 ## 📋 Available Tools
 
-The MCP server provides **7 tools** for AI assistants:
+The MCP server provides **18 tools** for AI assistants:
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
@@ -25,6 +25,17 @@ The MCP server provides **7 tools** for AI assistants:
 | `get_deployment` | Get deployment details | `project`, `uuid` |
 | `get_deployment_log` | Get deployment log output | `project`, `uuid` |
 | `create_deployment` | Create new deployment | `project`, `parent_identifier`, `start_revision`, `end_revision`, + optional params |
+| `list_ssh_keys` | List all SSH public keys | None |
+| `create_ssh_key` | Create a new SSH key pair | `title`, `key_type?` |
+| `list_global_environment_variables` | List all global environment variables | None |
+| `create_global_environment_variable` | Create a global environment variable | `name`, `value`, `locked?`, `build_pipeline?` |
+| `update_global_environment_variable` | Update a global environment variable | `id`, `name?`, `value?`, `locked?`, `build_pipeline?` |
+| `delete_global_environment_variable` | Delete a global environment variable | `id` |
+| `list_global_config_files` | List all global config file templates | None |
+| `get_global_config_file` | Get a global config file with body | `id` |
+| `create_global_config_file` | Create a global config file template | `path`, `body`, `description?`, `build?` |
+| `update_global_config_file` | Update a global config file template | `id`, `path?`, `body?`, `description?`, `build?` |
+| `delete_global_config_file` | Delete a global config file template | `id` |
 
 ### `list_projects`
 
@@ -83,6 +94,84 @@ Create a new deployment for a project.
 - `use_build_cache` (boolean, optional): Use build cache
 - `use_latest` (string, optional): Use latest deployed commit as start
 
+### `list_ssh_keys`
+List all SSH public keys for the account.
+
+**Returns**: Array of SSH keys with public keys, fingerprints, and key types. Never returns private keys.
+
+### `create_ssh_key`
+Create a new SSH key pair for the account.
+
+**Parameters**:
+- `title` (string): Title for the SSH key
+- `key_type` (string, optional): Key type — ED25519 (default) or RSA
+
+### `list_global_environment_variables`
+List all global (account-level) environment variables.
+
+**Returns**: Array of environment variables with names, masked values, and settings.
+
+### `create_global_environment_variable`
+Create a new global environment variable available across all projects.
+
+**Parameters**:
+- `name` (string): Variable name
+- `value` (string): Variable value
+- `locked` (boolean, optional): Lock the variable to prevent changes
+- `build_pipeline` (boolean, optional): Make available in build pipeline
+
+### `update_global_environment_variable`
+Update an existing global environment variable.
+
+**Parameters**:
+- `id` (string): Environment variable identifier
+- `name` (string, optional): Variable name
+- `value` (string, optional): Variable value
+- `locked` (boolean, optional): Lock status
+- `build_pipeline` (boolean, optional): Build pipeline availability
+
+### `delete_global_environment_variable`
+Delete a global environment variable. This action is irreversible.
+
+**Parameters**:
+- `id` (string): Environment variable identifier
+
+### `list_global_config_files`
+List all global (account-level) config file templates.
+
+**Returns**: Array of config files with paths, descriptions, and settings.
+
+### `get_global_config_file`
+Get a specific global config file template including its body content.
+
+**Parameters**:
+- `id` (string): Config file identifier (UUID)
+
+### `create_global_config_file`
+Create a new global config file template.
+
+**Parameters**:
+- `path` (string): File path (e.g. `config/database.yml`)
+- `body` (string): File contents
+- `description` (string, optional): Description of the config file
+- `build` (boolean, optional): Use with build pipeline
+
+### `update_global_config_file`
+Update an existing global config file template.
+
+**Parameters**:
+- `id` (string): Config file identifier (UUID)
+- `path` (string, optional): File path
+- `body` (string, optional): File contents
+- `description` (string, optional): Description
+- `build` (boolean, optional): Build pipeline flag
+
+### `delete_global_config_file`
+Delete a global config file template. This action is irreversible.
+
+**Parameters**:
+- `id` (string): Config file identifier (UUID)
+
 ## 🚀 Quick Start
 
 ### Easy Installation with Claude Code
@@ -140,6 +229,9 @@ Once configured, you can ask Claude to interact with DeployHQ:
 - "Get the latest deployment status for project Y"
 - "Create a new deployment for project Z"
 - "Show me the deployment log for the latest deployment"
+- "List my global environment variables"
+- "Create a global config file template for database.yml"
+- "Show my SSH keys"
 
 ## 💡 Common Usage Examples
 
@@ -186,6 +278,7 @@ Claude will:
 #### Optional
 - `LOG_LEVEL`: Controls log verbosity - `ERROR`, `INFO`, or `DEBUG` (default: `INFO`)
 - `NODE_ENV`: Environment mode - `production` or `development`
+- `DEPLOYHQ_READ_ONLY`: Set to `true` to block all mutating operations (default: `false`)
 
 ### Log Levels
 
@@ -385,7 +478,7 @@ Configure your local `.claude.json` to use the built version:
 The project includes a comprehensive test suite using Vitest:
 
 **Test Coverage:**
-- ✅ **Tool Schema Validation** - All 7 MCP tool schemas with valid/invalid inputs
+- ✅ **Tool Schema Validation** - All 18 MCP tool schemas with valid/invalid inputs
 - ✅ **API Client Methods** - All DeployHQ API methods with mocked responses
 - ✅ **Error Handling** - Authentication, validation, and network errors
 - ✅ **MCP Server Factory** - Server creation and configuration
@@ -399,7 +492,7 @@ npm run test:ui       # Interactive UI for debugging
 ```
 
 **Test Stats:**
-- 50+ tests across 3 test suites
+- 216 tests across 10 test suites
 - Covers tools, api-client, and mcp-server modules
 - Uses mocked fetch for isolated unit testing
 

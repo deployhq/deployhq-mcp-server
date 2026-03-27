@@ -7,6 +7,7 @@ import {
   GetDeploymentSchema,
   GetDeploymentLogSchema,
   CreateDeploymentSchema,
+  ListSshKeysSchema,
   tools,
 } from '../tools.js';
 
@@ -235,9 +236,21 @@ describe('Tool Schemas', () => {
     });
   });
 
+  describe('ListSshKeysSchema', () => {
+    it('should validate empty object', () => {
+      const result = ListSshKeysSchema.safeParse({});
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept any additional properties', () => {
+      const result = ListSshKeysSchema.safeParse({ foo: 'bar' });
+      expect(result.success).toBe(true);
+    });
+  });
+
   describe('Tools Array', () => {
-    it('should export 7 tools', () => {
-      expect(tools).toHaveLength(7);
+    it('should export 18 tools', () => {
+      expect(tools).toHaveLength(18);
     });
 
     it('should have correct tool names', () => {
@@ -249,6 +262,17 @@ describe('Tool Schemas', () => {
       expect(toolNames).toContain('get_deployment');
       expect(toolNames).toContain('get_deployment_log');
       expect(toolNames).toContain('create_deployment');
+      expect(toolNames).toContain('list_ssh_keys');
+      expect(toolNames).toContain('create_ssh_key');
+      expect(toolNames).toContain('list_global_environment_variables');
+      expect(toolNames).toContain('create_global_environment_variable');
+      expect(toolNames).toContain('update_global_environment_variable');
+      expect(toolNames).toContain('delete_global_environment_variable');
+      expect(toolNames).toContain('list_global_config_files');
+      expect(toolNames).toContain('get_global_config_file');
+      expect(toolNames).toContain('create_global_config_file');
+      expect(toolNames).toContain('update_global_config_file');
+      expect(toolNames).toContain('delete_global_config_file');
     });
 
     it('should have descriptions for all tools', () => {
